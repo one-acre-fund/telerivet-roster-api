@@ -1,0 +1,25 @@
+{
+  "name": "telerivet-roster-api",
+  "version": "1.0.0",
+  "description": "Telerivet bindings to the roster api",
+  "main": "api.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/one-acre-fund/telerivet-roster-api.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/one-acre-fund/telerivet-roster-api/issues"
+  },
+  "homepage": "https://github.com/one-acre-fund/telerivet-roster-api#readme",
+  "dependencies": {
+    "underscore": "^1.6.0"
+  }
+}
