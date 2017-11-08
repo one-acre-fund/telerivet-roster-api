@@ -9,6 +9,12 @@ var trim = function(str) {
   return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
 };
 
+var joinURL = function(a, b, sep) {
+  if (a.charAt(a.length - 1) == '/')
+    a = a.substr(0, a.length - 1);
+  return a + "/" + b;
+};
+
 var nestedGet = function(key, obj) {
 
   if (key === '.') return obj;
@@ -49,6 +55,7 @@ var format = function(str, args) {
 
 module.exports = {
   trim: trim,
+  joinURL: joinURL,
   nestedGet: nestedGet,
   format: format
 };

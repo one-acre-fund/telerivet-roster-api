@@ -58,7 +58,7 @@ if (parsed.error) {
   $error = parsed.error.message;
 }
 else {
-  $balance = rosterAPI.getClientBalance(parsed.accountNumber, parsed.accountPIN, [phone]);
+  $balance = rosterAPI.getClient(parsed.accountNumber, parsed.accountPIN, [phone]).balance;
 }
 ```
 
