@@ -48,9 +48,9 @@ RosterAPI.prototype.dataTableAttach = function(tableName, project) {
     var rowCur = table.queryRows();
     var row = null;
     while (rowCur.hasNext()) {
-      var nextRow = rowCur.next();
-      if ('name' in nextRow && 'url' in nextRow && 'key' in nextRow && nextRow.name == "Roster") {
-          row = nextRow;
+      var nextRowVars = rowCur.next().vars;
+      if ('name' in nextRowVars && 'url' in nextRowVars && 'key' in nextRowVars && nextRowVars.name == "Roster") {
+          row = nextRowVars;
           break;
       }
     }
