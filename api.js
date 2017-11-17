@@ -49,15 +49,15 @@ RosterAPI.prototype.dataTableAttach = function(tableName, project) {
     var row = null;
     while (rowCur.hasNext()) {
       var nextRow = rowCur.next();
-      if ('Name' in nextRow && 'URL' in nextRow && 'Key' in nextRow && nextRow.Name == "Roster") {
+      if ('name' in nextRow && 'url' in nextRow && 'key' in nextRow && nextRow.name == "Roster") {
           row = nextRow;
           break;
       }
     }
     if (!row) return false;
    
-    this.url = row.URL;
-    this.key = row.Key;
+    this.url = row.url;
+    this.key = row.key;
     return true; 
 };
 

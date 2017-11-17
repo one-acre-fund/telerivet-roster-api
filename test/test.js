@@ -151,7 +151,7 @@ function testAttachTable() {
   var api = require('../api');
  
   api.telerivet = new MockRivet();
-  var table = new MockTable([{ Name: "Roster", URL: "www.roster.com", Key: "foo" }]);
+  var table = new MockTable([{ name: "Roster", url: "www.roster.com", key: "foo" }]);
   api.telerivet.project.tables["External"] = table;
 
   api.dataTableAttach();
