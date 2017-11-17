@@ -127,7 +127,7 @@ RosterAPI.prototype.getClient = function(accountNumber, accountPin, phone) {
     country = utils.isoToOafCountry(split[1]);
   } else {
     if (!phone)
-      phone = telerivet.phone;
+      phone = this.telerivet.phone;
     country = utils.isoToOafCountry(phone.country);
   }
 
