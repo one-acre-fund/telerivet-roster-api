@@ -78,7 +78,7 @@ RosterAPI.prototype.request = function(path, opts) {
     this.requestLog.push([fullURL, opts]);
 
     var response = this.telerivet.httpClient.request(fullURL, opts);
-    if (opts.headers['Accept'] == 'application/json')
+    if (opts.headers['Accept'] == 'application/json' && response.content)
 		response.contentJSON = JSON.parse(response.content); 
 	
 	return response;
@@ -145,7 +145,9 @@ RosterAPI.prototype.getClient = function(accountNumber, accountPin, phone) {
     }
   };
 
-  return this.request(path, opts).contentJSON;
+  var response = this.request(path, opts);
+  if (response.contentJSON) return response.contentJSON;
+  return response;
 };
 
 //
