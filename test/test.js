@@ -174,8 +174,8 @@ function testGetClient() {
   var client = api.getClient("7890@KE", "111");
   assert.equal(client.foo, "bar");
   assert.equal(api.telerivet.requests[0][0], "http://oaf.com/sms/get");
-  assert.equal(api.telerivet.requests[0][1].data.account, "7890");
-  assert.equal(api.telerivet.requests[0][1].data.country, "Kenya");
+  assert.equal(api.telerivet.requests[0][1].params.account, "7890");
+  assert.equal(api.telerivet.requests[0][1].params.country, "Kenya");
   assert.equal(api.telerivet.requests[0][1].headers.Pin, "111");
   assert.equal(api.telerivet.requests[0][1].headers.Authorization, "Basic 12345");
 
@@ -186,8 +186,8 @@ function testGetClient() {
   client = api.getClient("5555", "222", { country: "UG" });
   assert.equal(client.biz, "baz");
   assert.equal(api.telerivet.requests[0][0], "http://oaf.com/sms/get");
-  assert.equal(api.telerivet.requests[0][1].data.account, "5555");
-  assert.equal(api.telerivet.requests[0][1].data.country, "Uganda");
+  assert.equal(api.telerivet.requests[0][1].params.account, "5555");
+  assert.equal(api.telerivet.requests[0][1].params.country, "Uganda");
   assert.equal(api.telerivet.requests[0][1].headers.Pin, "222");
   assert.equal(api.telerivet.requests[0][1].headers.Authorization, "Basic 12345");
 }
