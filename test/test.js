@@ -8,6 +8,44 @@ global.telerivetContext = {};
 
 var assert = require('assert');
 
+function Cursor(arr) {
+
+  this.i = 0;
+  this.arr = arr;
+
+}
+
+Cursor.prototype.hasNext = function() {
+  return this.i < this.arr.length;
+};
+
+Cursor.prototype.next = function() {
+  var value = this.arr[this.i];
+  this.i++;
+  return value;
+};
+
+function MockProject() {
+  
+  this.tables = {};
+};
+
+MockProject.prototype.queryDataTables = function(opts) {
+ 
+  if (!('name' in opts)) return null;
+
+  return new Cursor([this.tables[opts.name]]);
+};
+
+function MockTable(rows) {
+  this.rows = rows;
+  if (!rows) this.rows = [];
+};
+
+MockTable.prototype.queryRows = function(opts) {
+  return new Cursor(this.rows);
+};
+
 // Mock telerivet object that gives custom reponses and logs
 // requests
 function MockRivet() {
@@ -22,6 +60,8 @@ function MockRivet() {
       return response;
     }
   };
+
+  this.project = new MockProject();
 };
 
 var tests = [ // BEGIN TESTS
@@ -102,6 +142,21 @@ function testAccountParse() {
   var parsed = api.parseAccountAndPin(content);
   assert.equal(parsed.accountNumber, "12346@zambia");
   assert.equal(parsed.accountPin, "1234"); 
+},
+
+function testAttachTable() {
+
+  // Tests the API calls required to get client information
+
+  var api = require('../api');
+ 
+  api.telerivet = new MockRivet();
+  var table = new MockTable([{ Name: "Roster", URL: "www.roster.com", Key: "foo" }]);
+  api.telerivet.project.tables["External"] = table;
+
+  api.dataTableAttach();
+  assert.equal(api.url, "www.roster.com");
+  assert.equal(api.key, "foo"); 
 },
 
 function testGetClient() {

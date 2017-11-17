@@ -42,21 +42,20 @@ RosterAPI.prototype.dataTableAttach = function(tableName, project) {
         project = this.telerivet.project;
 
     var tableCur = project.queryDataTables({ name: tableName });
-    
     if (!tableCur.hasNext()) return false;
     var table = tableCur.next();
     
     var rowCur = table.queryRows();
     var row = null;
     while (rowCur.hasNext()) {
-      var nextRow = row;
-      if ('Name' in row && 'URL' in row && 'Key' in row && row.name == "Roster") {
+      var nextRow = rowCur.next();
+      if ('Name' in nextRow && 'URL' in nextRow && 'Key' in nextRow && nextRow.Name == "Roster") {
           row = nextRow;
           break;
       }
     }
     if (!row) return false;
-    
+   
     this.url = row.URL;
     this.key = row.Key;
     return true; 
@@ -65,7 +64,7 @@ RosterAPI.prototype.dataTableAttach = function(tableName, project) {
 RosterAPI.prototype.request = function(path, opts) {
 	
     if (!this.url)
-		dataTableAttach();
+		this.dataTableAttach();
 
     if (!('headers' in opts)) opts.headers = {};
     opts.headers['Authorization'] = "Basic " + this.key;
