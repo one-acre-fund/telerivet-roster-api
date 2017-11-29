@@ -11,7 +11,7 @@ if (!('telerivetContext' in global)) {
         state: state,
         content: content,
         httpClient: httpClient 
-    };   
+    };
 }
 
 //
@@ -21,23 +21,57 @@ if (!('telerivetContext' in global)) {
 function RosterAPI(telerivet) {
 
     this.telerivet = telerivet;
+   
     this.url = null;
     this.key = null;
+    this.credentials = {};
     this.requestLog = [];
+    
+    this.persistVar = '__RosterAPI__';
+    this.restoreState();
+};
+
+RosterAPI.prototype.restoreState = function(serialized) {
+	
+	if (!serialized) {	
+		if (!this.telerivet.state) return;    
+		if (!this.telerivet.state.vars[this.persistVar]) return;
+    	serialized = this.telerivet.state.vars[this.persistVar];
+    }
+
+	var state = JSON.parse(serialized);
+    for (var k in state) {
+        this[k] = state[k];
+    }
+};
+
+RosterAPI.prototype.saveState = function() {
+
+	if (!this.telerivet.state) return;
+
+    var state = 
+        { url: null, key: null, credentials: null, requestLog: null };
+    for (var k in state) {
+        state[k] = this[k];
+    } 
+    var serialized = JSON.stringify(state);
+    this.telerivet.state.vars[this.persistVar] = serialized;
+	return serialized;
 };
 
 RosterAPI.prototype.attach = function(url, key) {
 
     this.url = url;
     this.key = key;
+    this.saveState();
     return this; 
 };
 
-// We can attach to a URL/Key stored in the project "External" data table
+// We can attach to a URL/Key stored in the project "ExternalApis" data table
 RosterAPI.prototype.dataTableAttach = function(tableName, project) {
 
     if (!tableName)
-        tableName = "External";
+        tableName = "ExternalApis";
     
     if (!project)
         project = this.telerivet.project;
@@ -59,8 +93,40 @@ RosterAPI.prototype.dataTableAttach = function(tableName, project) {
    
     this.url = row.url;
     this.key = row.key;
+    this.saveState();
     return true; 
 };
+
+function HttpError(url, opts, response) {
+  
+    this.name = "HttpError";
+    
+    if (response.content && 
+        (response.content.Message || response.content.message)) {
+  	    this.message = response.content.Message || response.content.message;
+    }
+  	else {
+        this.message = JSON.stringify(response);
+    }
+
+  	this.url = url;
+    this.status = response.status;
+ 	this.opts = opts;
+  	this.response = response;
+};
+
+HttpError.prototype = new Error();
+HttpError.prototype.constructor = HttpError;
+HttpError.prototype.toTelerivet = function() {
+	return { 
+		$error_url: this.url,
+		$error_status: this.status,
+        $error_opts: JSON.stringify(this.opts),
+		$error_response: JSON.stringify(this.response)
+	}; 
+};
+
+RosterAPI.HttpError = HttpError;
 
 RosterAPI.prototype.request = function(path, opts) {
 	
@@ -76,12 +142,32 @@ RosterAPI.prototype.request = function(path, opts) {
 	var fullURL = utils.joinURL(this.url, path); 
     
     this.requestLog.push([fullURL, opts]);
+    this.saveState();
 
     var response = this.telerivet.httpClient.request(fullURL, opts);
-    if (opts.headers['Accept'] == 'application/json' && response.content)
-		response.contentJSON = JSON.parse(response.content); 
-	
-	return response;
+
+    // JSONify content if required
+    if (response.content) {
+        var contentType = response['Content-Type'];    
+        if (contentType && contentType.indexOf('application/json') == 0) {
+            response.content = JSON.parse(response.content);
+        }
+        else if (!contentType && opts.headers['Accept'].indexOf('application/json') == 0) {
+            try {
+                response.content = JSON.parse(response.content);
+            } catch (err) {
+                // fail to parse
+            }
+        }
+    }
+
+    // 200s - ok
+    // 300s - redirects
+    // 400s/500s - errors
+    if (response.status >= 300)
+        throw new HttpError(fullURL, opts, response);
+
+    return response.content;
 };
 
 var parseAccountNum = function(content) {
@@ -110,44 +196,103 @@ RosterAPI.prototype.parseAccountAndPin = function(content) {
     var parsed = {};
 
     parsed.accountNumber = parseAccountNum(content);
-    var country = parseCountry(content);
-    if (country)
-        parsed.accountNumber = parsed.accountNumber + "@" + country;
-
     parsed.accountPin = parsePin(content);
+    parsed.country = parseCountry(content);
     
     return parsed;
 };
 
-RosterAPI.prototype.getClient = function(accountNumber, accountPin, phone) {
+RosterAPI.prototype.toPhoneContext = function(countryOrPhone) {
 
-  var split = accountNumber.split('@');
-  if (split.length > 1) {
-    accountNumber =  split[0];
-    country = utils.isoToOafCountry(split[1]);
-  } else {
-    if (!phone)
-      phone = this.telerivet.phone;
-    country = utils.isoToOafCountry(phone.country);
-  }
+    if (countryOrPhone == null)
+        countryOrPhone = this.telerivet.phone;
 
-  var path = utils.format('sms/get', []);
- 
-  var opts = {
-    method: 'GET',
-    params: { 
-      account: accountNumber,
-      country: country
-    },
-    headers: { 
-      'Pin': accountPin,
-      'Accept': 'application/json'
+    var phoneContext = {};
+
+    if (_.isString(countryOrPhone)) {
+        phoneContext.isoCountry = countryOrPhone.toUpperCase();
+        phoneContext.phone = null;
+    } else {
+        phoneContext.phone = countryOrPhone;
+        phoneContext.isoCountry = phoneContext.phone.country.toUpperCase();
     }
-  };
 
-  var response = this.request(path, opts);
-  if (response.contentJSON) return response.contentJSON;
-  return response;
+	phoneContext.isoCountry =
+		utils.oafToIsoCountry(phoneContext.isoCountry);
+    phoneContext.oafCountry =
+        utils.isoToOafCountry(phoneContext.isoCountry);
+    
+    return phoneContext;
+};
+
+RosterAPI.prototype.authClient = function(accountNumber, countryOrPhone, accountPin) {
+
+    var phoneContext = this.toPhoneContext(countryOrPhone);
+
+    var path = utils.format('Client/Validate', []);
+ 
+    var opts = {
+        method: 'GET',
+        params: { 
+            account: accountNumber,
+            country: phoneContext.oafCountry
+        },
+        headers: { 
+            'Pin': accountPin,
+            'Accept': 'application/json'
+        }
+    };
+
+    var content = this.request(path, opts);
+     
+    if (content.isValidClient) {
+        this.credentials.accountNumber = accountNumber;
+        this.credentials.accountPin = accountPin;
+        this.saveState(); 
+    }
+ 
+    return content;
+};
+
+RosterAPI.prototype.getClient = function(accountNumber, countryOrPhone) {
+   
+    var phoneContext = this.toPhoneContext(countryOrPhone); 
+    
+    var path = utils.format('sms/get', []);
+ 
+    var opts = {
+    	method: 'GET',
+    	params: { 
+      		account: accountNumber,
+      		country: phoneContext.oafCountry
+    	},
+    	headers: { 
+      		'Pin': this.credentials.accountPin,
+      		'Accept': 'application/json'
+    	}
+  	};
+
+	return this.request(path, opts);  	
+};
+
+global.catchAll = function(todo) {
+
+	try {
+		todo();
+        global.$error = "";
+	}
+	catch (error) {
+		
+		global.$error = error.name;
+		global.$error_message = error.message;
+		
+		if (error.toTelerivet) {
+			var trError = error.toTelerivet();
+			for (var k in trError) {
+				global[k] = trError[k];
+			}
+		}
+	}
 };
 
 //
@@ -157,6 +302,4 @@ RosterAPI.prototype.getClient = function(accountNumber, accountPin, phone) {
 var rosterAPI = new RosterAPI(telerivetContext);
 
 module.exports = rosterAPI;
-
-
 

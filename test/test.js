@@ -50,18 +50,18 @@ MockTable.prototype.queryRows = function(opts) {
 // requests
 function MockRivet() {
 
-  var requests = this.requests = [];  
   var responses = this.responses = [];
 
   this.httpClient = {
     request: function() {
-      requests.push(arguments);
       var response = responses.shift();
       return response;
     }
   };
 
   this.project = new MockProject();
+  this.state = { vars: {} };
+  this.phone = {};
 };
 
 var tests = [ // BEGIN TESTS
@@ -130,18 +130,37 @@ function testAccountParse() {
   var content =  "#12345@kenya";
   
   var parsed = api.parseAccountAndPin(content);
-  assert.equal(parsed.accountNumber, "12345@kenya");
+  assert.equal(parsed.accountNumber, "12345");
+  assert.equal(parsed.country, "kenya");
   assert(!parsed.accountPin);
 
   content = "@burundi#abcde P123";
   var parsed = api.parseAccountAndPin(content);
-  assert.equal(parsed.accountNumber, "abcde@burundi");
+  assert.equal(parsed.accountNumber, "abcde");
+  assert.equal(parsed.country, "burundi");
   assert.equal(parsed.accountPin, "123"); 
   
   content = "P1234 #12346 @zambia and more stuff";
   var parsed = api.parseAccountAndPin(content);
-  assert.equal(parsed.accountNumber, "12346@zambia");
+  assert.equal(parsed.accountNumber, "12346");
+  assert.equal(parsed.country, "zambia");
   assert.equal(parsed.accountPin, "1234"); 
+},
+
+function testPhoneContext() {
+
+  // Tests parsing various account information from text messages
+ 
+  var api = require('../api');
+
+  var context = api.toPhoneContext("kenya");
+  assert.equal(context.isoCountry, "KE");
+  assert.equal(context.oafCountry, "Kenya");
+
+  var context = api.toPhoneContext({ country: "mw" });
+  assert(context.phone.country, "mw");
+  assert(context.isoCountry, "MW");
+  assert(context.oafCountry, "Malawi");
 },
 
 function testAttachTable() {
@@ -152,11 +171,56 @@ function testAttachTable() {
  
   api.telerivet = new MockRivet();
   var table = new MockTable([{ vars: {name: "Roster", url: "www.roster.com", key: "foo"} }]);
-  api.telerivet.project.tables["External"] = table;
+  api.telerivet.project.tables["ExternalApis"] = table;
 
   api.dataTableAttach();
   assert.equal(api.url, "www.roster.com");
   assert.equal(api.key, "foo"); 
+},
+
+function testSaveRestore() {
+
+  // Saving the API state between calls
+
+  var api = require('../api');
+ 
+  api.telerivet = new MockRivet();
+  api.attach("URL", "APIKEY");
+  
+  var serialized = api.saveState();
+
+  api.attach("URL2", "APIKEY2");
+  
+  assert.equal(api.url, "URL2");
+  assert.equal(api.key, "APIKEY2");
+
+  api.restoreState(serialized);
+
+  assert.equal(api.url, "URL");
+  assert.equal(api.key, "APIKEY");
+},
+
+function testAuthClient() {
+
+  // Tests the API calls required to get client information
+
+  var api = require('../api');
+ 
+  api.attach("http://oaf.com", "APIKEY");  
+  api.telerivet = new MockRivet();
+
+  api.telerivet.responses.push({ status: 200, content: JSON.stringify({ "isValidClient" : true }) });
+  var content = api.authClient("CLIENTID", { country: "ke" }, "PIN");
+  
+  assert.equal(content.isValidClient, true);
+  
+  var request = api.requestLog[0];
+  assert.equal(request[0], "http://oaf.com/Client/Validate");
+  assert.equal(request[1].params.account, "CLIENTID");
+  assert.equal(request[1].params.country, "Kenya");
+  assert.equal(request[1].headers.Pin, "PIN");
+  assert.equal(request[1].headers.Authorization, "Basic APIKEY");
+  assert.equal(api.credentials.accountPin, "PIN");  
 },
 
 function testGetClient() {
@@ -165,32 +229,85 @@ function testGetClient() {
 
   var api = require('../api');
  
+  api.attach("http://oaf.com", "APIKEY");  
+  api.telerivet = new MockRivet();
+  api.telerivet.phone = { country: "KE" };
+
+  // Auth with client pin
+  api.telerivet.responses.push({ status: 200, content: JSON.stringify({ isValidClient: true }) });
+  api.authClient("7890", null, "PIN");
+
+  // Check country encoded with accountNumber
+  api.telerivet.responses.push({ status: 200, content: JSON.stringify({ "foo" : "bar" }) });
+  api.requestLog = []; 
+
+  var client = api.getClient("7890");
+  assert.equal(client.foo, "bar");
+  
+  var request = api.requestLog[0];
+  assert.equal(request[0], "http://oaf.com/sms/get");
+  assert.equal(request[1].params.account, "7890");
+  assert.equal(request[1].params.country, "Kenya");
+  assert.equal(request[1].headers.Pin, "PIN");
+  assert.equal(request[1].headers.Authorization, "Basic APIKEY");
+},
+
+function testGetClientError() {
+
+  // Tests errors thrown by API calls
+
+  var api = require('../api');
+ 
   api.attach("http://oaf.com", "12345");  
   api.telerivet = new MockRivet();
 
   // Check country encoded with accountNumber
-  api.telerivet.responses.push({ content: JSON.stringify({ "foo" : "bar" }) });
+  api.telerivet.responses.push({ content: { message: "Server Error" }, status: 500 });
   
-  var client = api.getClient("7890@KE", "111");
-  assert.equal(client.foo, "bar");
-  assert.equal(api.telerivet.requests[0][0], "http://oaf.com/sms/get");
-  assert.equal(api.telerivet.requests[0][1].params.account, "7890");
-  assert.equal(api.telerivet.requests[0][1].params.country, "Kenya");
-  assert.equal(api.telerivet.requests[0][1].headers.Pin, "111");
-  assert.equal(api.telerivet.requests[0][1].headers.Authorization, "Basic 12345");
+  try {
+    var client = api.getClient("7890", "111");
+    assert(false);
+  }
+  catch (err) {
+    assert.equal(err.message, "Server Error");
+    assert.equal(err.response.status, 500);   
+  }
 
-  // Check country encoded in phone object
-  api.telerivet.requests.shift();
-  api.telerivet.responses.push({ content: JSON.stringify({ "biz" : "baz" }) });
+  // Test telerivet wrapping
+  api.telerivet.responses.push({ content: JSON.stringify({ message: "Server Error" }), status: 500 });
 
-  client = api.getClient("5555", "222", { country: "UG" });
-  assert.equal(client.biz, "baz");
-  assert.equal(api.telerivet.requests[0][0], "http://oaf.com/sms/get");
-  assert.equal(api.telerivet.requests[0][1].params.account, "5555");
-  assert.equal(api.telerivet.requests[0][1].params.country, "Uganda");
-  assert.equal(api.telerivet.requests[0][1].headers.Pin, "222");
-  assert.equal(api.telerivet.requests[0][1].headers.Authorization, "Basic 12345");
-}
+  catchAll(function() {
+    var client = api.getClient("7890", "111"); 
+  });
+  
+  assert.equal($error, "HttpError");
+  assert.equal($error_message, "Server Error");
+  assert.equal($error_url, "http://oaf.com/sms/get");
+  assert.equal(JSON.parse($error_opts).params.account, "7890");
+},
+
+function testTrAssert() {
+  
+  var trassert = require('./trassert');
+
+  trassert.ok(true);
+
+  var err = null;
+  try {
+    trassert.ok(false);
+  } catch (trErr) {
+    err = trErr;
+  }
+  assert(err != null);
+
+  trassert.equal("a", "a");
+  try {
+    trassert.equal("a", "b");
+  } catch (trErr) {
+    err = trErr;
+  }
+  assert(err != null);
+},
 
 ]; // END TESTS
 
