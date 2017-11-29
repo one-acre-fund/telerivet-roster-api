@@ -67,9 +67,17 @@ var isoToOaf = {
 
 var isoToOafCountry = function(isoCountry) {
   if (isoCountry in isoToOaf)
-    return isoToOaf[isoCountry];
+    return isoToOaf[isoCountry.toUpperCase()];
   // Passthrough to allow OAF names to just work too
   return isoCountry;
+};
+
+var oafToIsoCountry = function(oafCountry) {
+  for (var iso in isoToOaf) {
+    if (isoToOaf[iso].toUpperCase() == oafCountry.toUpperCase())
+      return iso;
+  }
+  return oafCountry;
 };
 
 module.exports = {
@@ -77,6 +85,7 @@ module.exports = {
   joinURL: joinURL,
   nestedGet: nestedGet,
   format: format,
-  isoToOafCountry: isoToOafCountry
+  isoToOafCountry: isoToOafCountry,
+  oafToIsoCountry: oafToIsoCountry
 };
 
