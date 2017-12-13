@@ -10,309 +10,354 @@ var assert = require('assert');
 
 function Cursor(arr) {
 
-  this.i = 0;
-  this.arr = arr;
+    this.i = 0;
+    this.arr = arr;
 
 }
 
 Cursor.prototype.hasNext = function() {
-  return this.i < this.arr.length;
+    return this.i < this.arr.length;
 };
 
 Cursor.prototype.next = function() {
-  var value = this.arr[this.i];
-  this.i++;
-  return value;
+    var value = this.arr[this.i];
+    this.i++;
+    return value;
 };
 
 function MockProject() {
-  
-  this.tables = {};
+
+    this.tables = {};
 };
 
 MockProject.prototype.queryDataTables = function(opts) {
- 
-  if (!('name' in opts)) return null;
 
-  return new Cursor([this.tables[opts.name]]);
+    if (!('name' in opts)) return null;
+
+    return new Cursor([this.tables[opts.name]]);
 };
 
 function MockTable(rows) {
-  this.rows = rows;
-  if (!rows) this.rows = [];
+    this.rows = rows;
+    if (!rows) this.rows = [];
 };
 
 MockTable.prototype.queryRows = function(opts) {
-  return new Cursor(this.rows);
+    return new Cursor(this.rows);
 };
 
 // Mock telerivet object that gives custom reponses and logs
 // requests
 function MockRivet() {
 
-  var responses = this.responses = [];
+    var responses = this.responses = [];
 
-  this.httpClient = {
-    request: function() {
-      var response = responses.shift();
-      return response;
-    }
-  };
+    this.httpClient = {
+        request: function() {
+            var response = responses.shift();
+            return response;
+        }
+    };
 
-  this.project = new MockProject();
-  this.state = { vars: {} };
-  this.phone = {};
+    this.project = new MockProject();
+    this.state = {
+        vars: {}
+    };
+    this.phone = {};
 };
 
 var tests = [ // BEGIN TESTS
 
-function logNodeVersion() {
-  console.log("Running with versions:");
-  console.log(process.versions);
-},
+    function logNodeVersion() {
+        console.log("Running with versions:");
+        console.log(process.versions);
+    },
 
-function testTrim() {
- 
-  // String trimming tests
+    function testTrim() {
 
-  var utils = require('../utils');
-  assert.equal("abcde", utils.trim(" abcde\n "));
-  assert.equal("foo bar", utils.trim("foo bar "));
-},
+        // String trimming tests
 
-function testJoinURL() {
+        var utils = require('../utils');
+        assert.equal("abcde", utils.trim(" abcde\n "));
+        assert.equal("foo bar", utils.trim("foo bar "));
+    },
 
-  // Test join logic for url roots and paths  
+    function testJoinURL() {
 
-  var utils = require('../utils');
-  var joinURL = utils.joinURL;
+        // Test join logic for url roots and paths  
 
-  assert.equal(joinURL("http://www.google.com/", "query"),
-               "http://www.google.com/query");
-  assert.equal(joinURL("foo", "bar"), "foo/bar");
-},
+        var utils = require('../utils');
+        var joinURL = utils.joinURL;
 
-function testNestedGet() {
+        assert.equal(joinURL("http://www.google.com/", "query"),
+            "http://www.google.com/query");
+        assert.equal(joinURL("foo", "bar"), "foo/bar");
+    },
 
-  // Nested path object get tests
+    function testNestedGet() {
 
-  var utils = require('../utils');
-  var nestedGet = utils.nestedGet;
+        // Nested path object get tests
 
-  var obj = {
-    a: { b: 1 },
-    c: { d: "ignore" },
-   "c.d" : 2,
-    e: [{ f: 3}, { f: 4 }]
-  };
+        var utils = require('../utils');
+        var nestedGet = utils.nestedGet;
 
-  assert.equal(nestedGet("a.b", obj), 1);
-  assert.equal(nestedGet("c.d", obj), 2);
-  assert.equal(nestedGet("e.0.f", obj), 3);
-  assert.equal(nestedGet("e.1.f", obj), 4);
-},
+        var obj = {
+            a: {
+                b: 1
+            },
+            c: {
+                d: "ignore"
+            },
+            "c.d": 2,
+            e: [{
+                f: 3
+            }, {
+                f: 4
+            }]
+        };
 
-function testFormat() {
+        assert.equal(nestedGet("a.b", obj), 1);
+        assert.equal(nestedGet("c.d", obj), 2);
+        assert.equal(nestedGet("e.0.f", obj), 3);
+        assert.equal(nestedGet("e.1.f", obj), 4);
+    },
 
-  // Basic string format tests
- 
-  var utils = require('../utils');
-  assert.equal("Hello World", utils.format("Hello {0}", ["World"]));   
-  assert.equal("Goodbye Moon 2", utils.format("Good{0} {1} {2}", ["bye", "Moon", 2]));
-},
+    function testFormat() {
 
-function testAccountParse() {
-  
-  // Tests parsing various account information from text messages
- 
-  var api = require('../api');
+        // Basic string format tests
 
-  var content =  "#12345@kenya";
-  
-  var parsed = api.parseAccountAndPin(content);
-  assert.equal(parsed.accountNumber, "12345");
-  assert.equal(parsed.country, "kenya");
-  assert(!parsed.accountPin);
+        var utils = require('../utils');
+        assert.equal("Hello World", utils.format("Hello {0}", ["World"]));
+        assert.equal("Goodbye Moon 2", utils.format("Good{0} {1} {2}", ["bye", "Moon", 2]));
+    },
 
-  content = "@burundi#abcde P123";
-  var parsed = api.parseAccountAndPin(content);
-  assert.equal(parsed.accountNumber, "abcde");
-  assert.equal(parsed.country, "burundi");
-  assert.equal(parsed.accountPin, "123"); 
-  
-  content = "P1234 #12346 @zambia and more stuff";
-  var parsed = api.parseAccountAndPin(content);
-  assert.equal(parsed.accountNumber, "12346");
-  assert.equal(parsed.country, "zambia");
-  assert.equal(parsed.accountPin, "1234"); 
-},
+    function testAccountParse() {
 
-function testPhoneContext() {
+        // Tests parsing various account information from text messages
 
-  // Tests parsing various account information from text messages
- 
-  var api = require('../api');
+        var api = require('../api');
 
-  var context = api.toPhoneContext("kenya");
-  assert.equal(context.isoCountry, "KE");
-  assert.equal(context.oafCountry, "Kenya");
+        var content = "#12345@kenya";
 
-  var context = api.toPhoneContext({ country: "mw" });
-  assert(context.phone.country, "mw");
-  assert(context.isoCountry, "MW");
-  assert(context.oafCountry, "Malawi");
-},
+        var parsed = api.parseAccountAndPin(content);
+        assert.equal(parsed.accountNumber, "12345");
+        assert.equal(parsed.country, "kenya");
+        assert(!parsed.accountPin);
 
-function testAttachTable() {
+        content = "@burundi#abcde P123";
+        var parsed = api.parseAccountAndPin(content);
+        assert.equal(parsed.accountNumber, "abcde");
+        assert.equal(parsed.country, "burundi");
+        assert.equal(parsed.accountPin, "123");
 
-  // Tests the API calls required to get client information
+        content = "P1234 #12346 @zambia and more stuff";
+        var parsed = api.parseAccountAndPin(content);
+        assert.equal(parsed.accountNumber, "12346");
+        assert.equal(parsed.country, "zambia");
+        assert.equal(parsed.accountPin, "1234");
+    },
 
-  var api = require('../api');
- 
-  api.telerivet = new MockRivet();
-  var table = new MockTable([{ vars: {name: "Roster", url: "www.roster.com", key: "foo"} }]);
-  api.telerivet.project.tables["ExternalApis"] = table;
+    function testPhoneContext() {
 
-  api.dataTableAttach();
-  assert.equal(api.url, "www.roster.com");
-  assert.equal(api.key, "foo"); 
-},
+        // Tests parsing various account information from text messages
 
-function testSaveRestore() {
+        var api = require('../api');
 
-  // Saving the API state between calls
+        var context = api.toPhoneContext("kenya");
+        assert.equal(context.isoCountry, "KE");
+        assert.equal(context.oafCountry, "Kenya");
 
-  var api = require('../api');
- 
-  api.telerivet = new MockRivet();
-  api.attach("URL", "APIKEY");
-  
-  var serialized = api.saveState();
+        var context = api.toPhoneContext({
+            country: "mw"
+        });
+        assert(context.phone.country, "mw");
+        assert(context.isoCountry, "MW");
+        assert(context.oafCountry, "Malawi");
+    },
 
-  api.attach("URL2", "APIKEY2");
-  
-  assert.equal(api.url, "URL2");
-  assert.equal(api.key, "APIKEY2");
+    function testAttachTable() {
 
-  api.restoreState(serialized);
+        // Tests the API calls required to get client information
 
-  assert.equal(api.url, "URL");
-  assert.equal(api.key, "APIKEY");
-},
+        var api = require('../api');
 
-function testAuthClient() {
+        api.telerivet = new MockRivet();
+        var table = new MockTable([{
+            vars: {
+                name: "Roster",
+                url: "www.roster.com",
+                key: "foo"
+            }
+        }]);
+        api.telerivet.project.tables["ExternalApis"] = table;
 
-  // Tests the API calls required to get client information
+        api.dataTableAttach();
+        assert.equal(api.url, "www.roster.com");
+        assert.equal(api.key, "foo");
+    },
 
-  var api = require('../api');
- 
-  api.attach("http://oaf.com", "APIKEY");  
-  api.telerivet = new MockRivet();
+    function testSaveRestore() {
 
-  api.telerivet.responses.push({ status: 200, content: JSON.stringify({ "isValidClient" : true }) });
-  var content = api.authClient("CLIENTID", { country: "ke" }, "PIN");
-  
-  assert.equal(content.isValidClient, true);
-  
-  var request = api.requestLog[0];
-  assert.equal(request[0], "http://oaf.com/Client/Validate");
-  assert.equal(request[1].params.account, "CLIENTID");
-  assert.equal(request[1].params.country, "Kenya");
-  assert.equal(request[1].headers.Pin, "PIN");
-  assert.equal(request[1].headers.Authorization, "Basic APIKEY");
-  assert.equal(api.credentials.accountPin, "PIN");  
-},
+        // Saving the API state between calls
 
-function testGetClient() {
+        var api = require('../api');
 
-  // Tests the API calls required to get client information
+        api.telerivet = new MockRivet();
+        api.attach("URL", "APIKEY");
 
-  var api = require('../api');
- 
-  api.attach("http://oaf.com", "APIKEY");  
-  api.telerivet = new MockRivet();
-  api.telerivet.phone = { country: "KE" };
+        var serialized = api.saveState();
 
-  // Auth with client pin
-  api.telerivet.responses.push({ status: 200, content: JSON.stringify({ isValidClient: true }) });
-  api.authClient("7890", null, "PIN");
+        api.attach("URL2", "APIKEY2");
 
-  // Check country encoded with accountNumber
-  api.telerivet.responses.push({ status: 200, content: JSON.stringify({ "foo" : "bar" }) });
-  api.requestLog = []; 
+        assert.equal(api.url, "URL2");
+        assert.equal(api.key, "APIKEY2");
 
-  var client = api.getClient("7890");
-  assert.equal(client.foo, "bar");
-  
-  var request = api.requestLog[0];
-  assert.equal(request[0], "http://oaf.com/sms/get");
-  assert.equal(request[1].params.account, "7890");
-  assert.equal(request[1].params.country, "Kenya");
-  assert.equal(request[1].headers.Pin, "PIN");
-  assert.equal(request[1].headers.Authorization, "Basic APIKEY");
-},
+        api.restoreState(serialized);
 
-function testGetClientError() {
+        assert.equal(api.url, "URL");
+        assert.equal(api.key, "APIKEY");
+    },
 
-  // Tests errors thrown by API calls
+    function testAuthClient() {
 
-  var api = require('../api');
- 
-  api.attach("http://oaf.com", "12345");  
-  api.telerivet = new MockRivet();
+        // Tests the API calls required to get client information
 
-  // Check country encoded with accountNumber
-  api.telerivet.responses.push({ content: { message: "Server Error" }, status: 500 });
-  
-  try {
-    var client = api.getClient("7890", "111");
-    assert(false);
-  }
-  catch (err) {
-    assert.equal(err.message, "Server Error");
-    assert.equal(err.response.status, 500);   
-  }
+        var api = require('../api');
 
-  // Test telerivet wrapping
-  api.telerivet.responses.push({ content: JSON.stringify({ message: "Server Error" }), status: 500 });
+        api.attach("http://oaf.com", "APIKEY");
+        api.telerivet = new MockRivet();
 
-  catchAll(function() {
-    var client = api.getClient("7890", "111"); 
-  });
-  
-  assert.equal($error, "HttpError");
-  assert.equal($error_message, "Server Error");
-  assert.equal($error_url, "http://oaf.com/sms/get");
-  assert.equal(JSON.parse($error_opts).params.account, "7890");
-},
+        api.telerivet.responses.push({
+            status: 200,
+            content: JSON.stringify({
+                "isValidClient": true
+            })
+        });
+        var content = api.authClient("CLIENTID", {
+            country: "ke"
+        }, "PIN");
 
-function testTrAssert() {
-  
-  var trassert = require('./trassert');
+        assert.equal(content.isValidClient, true);
 
-  trassert.ok(true);
+        var request = api.requestLog[0];
+        assert.equal(request[0], "http://oaf.com/Client/Validate");
+        assert.equal(request[1].params.account, "CLIENTID");
+        assert.equal(request[1].params.country, "Kenya");
+        assert.equal(request[1].headers.Pin, "PIN");
+        assert.equal(request[1].headers.Authorization, "Basic APIKEY");
+        assert.equal(api.credentials.accountPin, "PIN");
+    },
 
-  var err = null;
-  try {
-    trassert.ok(false);
-  } catch (trErr) {
-    err = trErr;
-  }
-  assert(err != null);
+    function testGetClient() {
 
-  trassert.equal("a", "a");
-  try {
-    trassert.equal("a", "b");
-  } catch (trErr) {
-    err = trErr;
-  }
-  assert(err != null);
-},
+        // Tests the API calls required to get client information
+
+        var api = require('../api');
+
+        api.attach("http://oaf.com", "APIKEY");
+        api.telerivet = new MockRivet();
+        api.telerivet.phone = {
+            country: "KE"
+        };
+
+        // Auth with client pin
+        api.telerivet.responses.push({
+            status: 200,
+            content: JSON.stringify({
+                isValidClient: true
+            })
+        });
+        api.authClient("7890", null, "PIN");
+
+        // Check country encoded with accountNumber
+        api.telerivet.responses.push({
+            status: 200,
+            content: JSON.stringify({
+                "foo": "bar"
+            })
+        });
+        api.requestLog = [];
+
+        var client = api.getClient("7890");
+        assert.equal(client.foo, "bar");
+
+        var request = api.requestLog[0];
+        assert.equal(request[0], "http://oaf.com/sms/get");
+        assert.equal(request[1].params.account, "7890");
+        assert.equal(request[1].params.country, "Kenya");
+        assert.equal(request[1].headers.Pin, "PIN");
+        assert.equal(request[1].headers.Authorization, "Basic APIKEY");
+    },
+
+    function testGetClientError() {
+
+        // Tests errors thrown by API calls
+
+        var api = require('../api');
+
+        api.attach("http://oaf.com", "12345");
+        api.telerivet = new MockRivet();
+
+        // Check country encoded with accountNumber
+        api.telerivet.responses.push({
+            content: {
+                message: "Server Error"
+            },
+            status: 500
+        });
+
+        try {
+            var client = api.getClient("7890", "111");
+            assert(false);
+        } catch (err) {
+            assert.equal(err.message, "Server Error");
+            assert.equal(err.response.status, 500);
+        }
+
+        // Test telerivet wrapping
+        api.telerivet.responses.push({
+            content: JSON.stringify({
+                message: "Server Error"
+            }),
+            status: 500
+        });
+
+        catchAll(function() {
+            var client = api.getClient("7890", "111");
+        });
+
+        assert.equal($error, "HttpError");
+        assert.equal($error_message, "Server Error");
+        assert.equal($error_url, "http://oaf.com/sms/get");
+        assert.equal(JSON.parse($error_opts).params.account, "7890");
+    },
+
+    function testTrAssert() {
+
+        var trassert = require('./trassert');
+
+        trassert.ok(true);
+
+        var err = null;
+        try {
+            trassert.ok(false);
+        } catch (trErr) {
+            err = trErr;
+        }
+        assert(err != null);
+
+        trassert.equal("a", "a");
+        try {
+            trassert.equal("a", "b");
+        } catch (trErr) {
+            err = trErr;
+        }
+        assert(err != null);
+    },
 
 ]; // END TESTS
 
 for (var i = 0; i < tests.length; ++i) {
-  console.log("---\nRunning test '" + tests[i].name + "'\n---");  
-  tests[i]();
+    console.log("---\nRunning test '" + tests[i].name + "'\n---");
+    tests[i]();
 }
-
