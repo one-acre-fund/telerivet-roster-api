@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "node test/test.js",
-    "style": "node node_modules/js-beautify/js/bin/js-beautify.js -r -f "
+    "style": "node node_modules/js-beautify/js/bin/js-beautify.js -r -f ",
+    "style-all": "node node_modules/js-beautify/js/bin/js-beautify.js -r -f *.js test/*.js"
   },
   "repository": {
     "type": "git",
