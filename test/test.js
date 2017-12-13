@@ -230,21 +230,24 @@ var tests = [ // BEGIN TESTS
         api.telerivet.responses.push({
             status: 200,
             content: JSON.stringify({
-                "isValidClient": true
+                "Result": "ClientExists"
             })
         });
-        var content = api.authClient("CLIENTID", {
+        var authd = api.authClient("CLIENTID", {
             country: "ke"
         }, "PIN");
 
-        assert.equal(content.isValidClient, true);
+        assert(authd);
 
         var request = api.requestLog[0];
-        assert.equal(request[0], "http://oaf.com/Client/Validate");
+        assert.equal(request[0], "http://oaf.com/sms/Validate");
         assert.equal(request[1].params.account, "CLIENTID");
         assert.equal(request[1].params.country, "Kenya");
         assert.equal(request[1].headers.Pin, "PIN");
+        assert.equal(request[1].headers['X-OAF-Account'], "CLIENTID");
         assert.equal(request[1].headers.Authorization, "Basic APIKEY");
+        assert.equal(api.credentials.accountCountry, "Kenya");
+        assert.equal(api.credentials.accountNumber, "CLIENTID");
         assert.equal(api.credentials.accountPin, "PIN");
     },
 
@@ -264,10 +267,10 @@ var tests = [ // BEGIN TESTS
         api.telerivet.responses.push({
             status: 200,
             content: JSON.stringify({
-                isValidClient: true
+                "Result": "ClientExists"
             })
         });
-        api.authClient("7890", null, "PIN");
+        assert(api.authClient("7890", null, "PIN"));
 
         // Check country encoded with accountNumber
         api.telerivet.responses.push({
@@ -282,10 +285,13 @@ var tests = [ // BEGIN TESTS
         assert.equal(client.foo, "bar");
 
         var request = api.requestLog[0];
-        assert.equal(request[0], "http://oaf.com/sms/get");
+        assert.equal(request[0], "http://oaf.com/sms/Client");
         assert.equal(request[1].params.account, "7890");
         assert.equal(request[1].params.country, "Kenya");
         assert.equal(request[1].headers.Pin, "PIN");
+        assert.equal(request[1].headers['X-OAF-Pin'], "PIN");
+        assert.equal(request[1].headers['X-OAF-Account'], "7890");
+        assert.equal(request[1].headers['X-OAF-Country'], "Kenya");
         assert.equal(request[1].headers.Authorization, "Basic APIKEY");
     },
 
@@ -328,7 +334,7 @@ var tests = [ // BEGIN TESTS
 
         assert.equal($error, "HttpError");
         assert.equal($error_message, "Server Error");
-        assert.equal($error_url, "http://oaf.com/sms/get");
+        assert.equal($error_url, "http://oaf.com/sms/Client");
         assert.equal(JSON.parse($error_opts).params.account, "7890");
     },
 

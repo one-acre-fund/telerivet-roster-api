@@ -22,4 +22,3 @@ api.dataTableAttach("TestApis");
 assert.ok(state.vars[api.persistVar]);
 
 assert.ok(false);
-
