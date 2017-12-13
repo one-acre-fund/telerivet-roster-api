@@ -24,8 +24,10 @@ function RosterAPI(telerivet) {
 
     this.url = null;
     this.key = null;
-    this.credentials = {};
+    this.credentials = null;
+
     this.requestLog = [];
+    this.verbose = false;
 
     this.persistVar = '__RosterAPI__';
     this.restoreState();
@@ -53,7 +55,6 @@ RosterAPI.prototype.saveState = function() {
         url: null,
         key: null,
         credentials: null,
-        requestLog: null
     };
     for (var k in state) {
         state[k] = this[k];
@@ -139,7 +140,18 @@ RosterAPI.prototype.request = function(path, opts) {
         this.dataTableAttach();
 
     if (!('headers' in opts)) opts.headers = {};
-    opts.headers['Authorization'] = "Basic " + this.key;
+
+    var credentials = this.credentials;
+    if ('credentials' in opts) credentials = opts.credentials;
+
+    if (credentials) {
+        opts.headers['Authorization'] = "Basic " + credentials.key;
+        opts.headers['X-OAF-Account'] = credentials.accountNumber;
+        opts.headers['X-OAF-Country'] = credentials.accountCountry;
+        var accountPin = credentials.accountPin ? credentials.accountPin : "";
+        opts.headers['Pin'] = accountPin;
+        opts.headers['X-OAF-Pin'] = accountPin;
+    }
 
     if (!('Accept' in opts.headers))
         opts.headers['Accept'] = 'application/json';
@@ -148,6 +160,10 @@ RosterAPI.prototype.request = function(path, opts) {
 
     this.requestLog.push([fullURL, opts]);
     this.saveState();
+
+    if (this.verbose) {
+        console.log("Requesting:\n  " + fullURL + "\n options:\n  " + JSON.stringify(opts));
+    }
 
     var response = this.telerivet.httpClient.request(fullURL, opts);
 
@@ -163,6 +179,10 @@ RosterAPI.prototype.request = function(path, opts) {
                 // fail to parse
             }
         }
+    }
+
+    if (this.verbose) {
+        console.log("Response:\n  " + JSON.stringify(response));
     }
 
     // 200s - ok
@@ -233,7 +253,14 @@ RosterAPI.prototype.authClient = function(accountNumber, countryOrPhone, account
 
     var phoneContext = this.toPhoneContext(countryOrPhone);
 
-    var path = utils.format('Client/Validate', []);
+    var credentials = {
+        key: this.key,
+        accountNumber: accountNumber,
+        accountCountry: phoneContext.oafCountry,
+        accountPin: accountPin
+    };
+
+    var path = utils.format('sms/Validate', []);
 
     var opts = {
         method: 'GET',
@@ -242,27 +269,43 @@ RosterAPI.prototype.authClient = function(accountNumber, countryOrPhone, account
             country: phoneContext.oafCountry
         },
         headers: {
-            'Pin': accountPin,
             'Accept': 'application/json'
-        }
+        },
+        credentials: credentials
     };
 
-    var content = this.request(path, opts);
+    var content = null;
+    try {
+        content = this.request(path, opts);
+    } catch (err) {
 
-    if (content.isValidClient) {
-        this.credentials.accountNumber = accountNumber;
-        this.credentials.accountPin = accountPin;
-        this.saveState();
+        if (!(err instanceof HttpError))
+            throw err;
+
+        if (!(err.status == 403))
+            throw err;
+
+        // Authenticating is kind of weird right now, since we don't have
+        // a dedicated endpoint for it.  Use Validate as a test for now.
+        content = {
+            Result: 'ClientDoesNotExist'
+        };
     }
 
-    return content;
+    if (content.Result == 'ClientExists') {
+        this.credentials = credentials;
+        this.saveState();
+        return true;
+    }
+
+    return false;
 };
 
 RosterAPI.prototype.getClient = function(accountNumber, countryOrPhone) {
 
     var phoneContext = this.toPhoneContext(countryOrPhone);
 
-    var path = utils.format('sms/get', []);
+    var path = utils.format('sms/Client', []);
 
     var opts = {
         method: 'GET',
@@ -271,7 +314,32 @@ RosterAPI.prototype.getClient = function(accountNumber, countryOrPhone) {
             country: phoneContext.oafCountry
         },
         headers: {
-            'Pin': this.credentials.accountPin,
+            'Accept': 'application/json'
+        }
+    };
+
+    return this.request(path, opts);
+};
+
+RosterAPI.prototype.isSerialNumberRegistered = function(
+    productTypes, serialNum, accountNumber, countryOrPhone) {
+
+    var phoneContext = this.toPhoneContext(countryOrPhone);
+
+    if (!_.isArray(productTypes))
+        productTypes = [productTypes];
+
+    var path = utils.format('sms/IsSerialNumberRegistered', []);
+
+    var opts = {
+        method: 'GET',
+        params: {
+            account: accountNumber,
+            country: phoneContext.oafCountry,
+            inputNames: productTypes,
+            serialNum: serialNum
+        },
+        headers: {
             'Accept': 'application/json'
         }
     };

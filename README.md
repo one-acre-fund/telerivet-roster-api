@@ -51,6 +51,96 @@ These scripts are meant to be require()'d as a cloud script module in a Telerive
 
 ## API Bindings
 
+### request(path, opts) => obj
+
+```javascript
+$result = rosterAPI.request("Clients", { params: { 'account' : '12345' } });
+```
+
+Raw API request functionality which uses the attached endpoint and API key of the `rosterAPI` to do a request at a certain URL path.  Returns the response content when successful, otherwise throws an HttpError containing the full response object and other data.
+
+------
+
+### authClient(accountNumber, [countryOrPhone], [accountPin]) => bool
+
+```javascript
+$isValidAndAuthorized = rosterAPI.authClient("12345");
+```
+
+Authorizes the client to access Roster, which (for now) simply requires a valid `accountNumber`, and stores the provided credentials for future calls (`accountPin` if provided).  The `countryOrPhone` parameter may be either the telerivet global `phone` object (default if not provided), a Roster country name, or an ISO country name.
+
+`authClient` must be used before making other API calls, even without a PIN, otherwise `403 HttpErrors` will be thrown.  For now you can work around this with `rosterAPI.credentials = { key: rosterAPI.key }; rosterAPI.saveState();`, but this won't work once calls no longer include the account number.
+
+### getClient(accountNumber, [countryOrPhone]) => obj
+
+```javascript
+$client = rosterAPI.getClient("12345");
+```
+
+Returns a client information object with at least the following:
+
+```javascript
+{
+  ClientId: (number),
+  GlobalClientId: "..."
+  AccountNumber: "..."
+  FirstName: "..."
+  LastName: "..."
+  DistrictName: "..."
+  RegionName: "..."
+  CountryName: "Kenya"
+  DateCreated: "2016-04-05T14:30:29.397"
+  EnrollmentDate: "2016-04-05T14:30:29.397"
+  Ban: false
+  Deceased: false
+  FirstSeasonId: 180
+  LastActiveSeasonId: null|(number)
+  BalanceHistory: [
+    { "SeasonId": 180,
+      "SeasonName": "2016, Long Rain",
+      "SeasonStart":"2016-03-01T00:00:00",
+      "CurrencyCode":"MMK",
+      "TotalCredit":90000,
+      "TotalRepayment_IncludingOverpayments":90000,
+      "Balance":0 },
+   ...
+   ]
+}
+```
+
+The `accountNumber` and `countryOrPhone` parameters are used similarly to the `authClient` call.
+
+### isSerialNumberRegistered(productTypes, serialNum, accountNumber, [countryOrPhone]) => obj
+
+```javascript
+$result = rosterAPI.isSerialNumberRegistered("Sun King Home", "67890987", "12345");
+```
+
+Returns a result object with at least the following:
+
+```javascript
+{
+  Result: "SerialNumberNotRegistered",
+  SerialNumProduct: "Sun King Home"
+}
+```
+
+The `productTypes` parameter may be either a single Roster product type (name of a Roster input) or an array of several product types.
+
+The `accountNumber` and `countryOrPhone` parameters are used similarly to the `getClient` call.
+
+The `Result` values are one of:
+
+* `"SerialNumberNotRegistered"`
+* `"SerialNumberIsRegisteredToAnotherClient"`
+* `"SerialNumberIsAlreadyRegisteredToCurrentClient"`
+* `"SerialNumberDoesNotBelongToPassedInputs"` - the serial number can't be found for these inputs in the Roster database
+* `"SerialNumberAmbiguous"` - the serial number was found for two or more products of different types, so a result can't be returned.  This shouldn't happen if only one product type is specified (but rarely can due to an ongoing Roster data issue).
+                    
+The `SerialNumProduct` is provided (if possible) to indicate the product type the serial number was found for - generally this is only useful if multiple product types are specified.
+
+## Other Helpers
+
 ### [global].catchAll
 
 ```javascript
@@ -71,50 +161,13 @@ The `catchAll` helper function wraps javascript errors in a helpful way so they 
 
 Certain error classes also report extra information (like `HttpError`'s `$error_status` and `$error_url`) by implementing a `toTelerivet()` method.
 
-### request(path, opts)
-
-```javascript
-$result = rosterAPI.request("Clients/Get", { params: { 'account' : '12345' } });
-```
-
-Raw API request functionality which uses the attached endpoint and API key of the `rosterAPI` to do a request at a certain URL path.  Returns the response content when successful, otherwise throws an HttpError containing the full response object and other data.
-
-TODO: Make these calls accurate
-
 ### parseAccountAndPin()
-
-```javascript
-var rosterAPI = require('ext/roster/api');
-catchAll(function() {
-
-   // Do stuff with the roster here
-   $result = rosterAPI.doStuff();
-
-}); // $error, $error_message set if errors are thrown
-```
 
 Helper to infer the account number, country, and PIN a user passes in from the raw content of a text message.
 
 Account numbers are identified with a `#` prefix (`#12345678`), PINs are identified with `P` (`P123`), and country is inferred but may be specified by `@` (`@kenya`).
 
 If `parsed.error != null` the parsing was unsuccessful and `parsed.error.message` may be returned to the user.  Alternately, `parsed.error.code` may be used to provide a custom message instead. 
-
-### getClientInfo()
-
-```javascript
-var rosterAPI = require('ext/roster/api');
-var parsed = rosterAPI.parseAccountAndPIN(content);
-if (parsed.error) { 
-  $error = parsed.error.message;
-}
-else {
-  $balance = rosterAPI.getClient(parsed.accountNumber, parsed.accountPIN, [phone]).balance;
-}
-```
-
-The `accountNumber` and `accountPIN` parameters are both strings, generally the account number is a set of 8 digits with optional `@country` suffix and the pin is a multi-digit identifier.  Optionally the phone can be specified, otherwise it is the current phone.
-
-TODO: Add More/Document more Roster API calls.
 
 
 
