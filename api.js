@@ -145,7 +145,7 @@ RosterAPI.prototype.request = function(path, opts) {
     if ('credentials' in opts) credentials = opts.credentials;
 
     if (credentials) {
-        opts.headers['Authorization'] = "Basic " + credentials.key;
+        opts.headers['Authorization'] = "ApiKey " + credentials.key;
         opts.headers['X-OAF-Account'] = credentials.accountNumber;
         opts.headers['X-OAF-Country'] = credentials.accountCountry;
         var accountPin = credentials.accountPin ? credentials.accountPin : "";

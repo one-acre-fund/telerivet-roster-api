@@ -245,7 +245,7 @@ var tests = [ // BEGIN TESTS
         assert.equal(request[1].params.country, "Kenya");
         assert.equal(request[1].headers.Pin, "PIN");
         assert.equal(request[1].headers['X-OAF-Account'], "CLIENTID");
-        assert.equal(request[1].headers.Authorization, "Basic APIKEY");
+        assert.equal(request[1].headers.Authorization, "ApiKey APIKEY");
         assert.equal(api.credentials.accountCountry, "Kenya");
         assert.equal(api.credentials.accountNumber, "CLIENTID");
         assert.equal(api.credentials.accountPin, "PIN");
@@ -292,7 +292,7 @@ var tests = [ // BEGIN TESTS
         assert.equal(request[1].headers['X-OAF-Pin'], "PIN");
         assert.equal(request[1].headers['X-OAF-Account'], "7890");
         assert.equal(request[1].headers['X-OAF-Country'], "Kenya");
-        assert.equal(request[1].headers.Authorization, "Basic APIKEY");
+        assert.equal(request[1].headers.Authorization, "ApiKey APIKEY");
     },
 
     function testGetClientError() {
