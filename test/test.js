@@ -157,6 +157,17 @@ var tests = [ // BEGIN TESTS
         assert.equal(parsed.accountPin, "1234");
     },
 
+    function testApiVersion() {
+        
+        // Tests super dumb version info coming back
+        
+        var api = require('../api');
+        
+        console.log("API Version", api.getVersion());
+
+        assert(parseInt(api.getVersion().semver[0]) > 0);
+    },
+
     function testPhoneContext() {
 
         // Tests parsing various account information from text messages
