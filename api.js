@@ -1,4 +1,5 @@
 var utils = require('./utils');
+var version = require('./version');
 
 // Dump globals into a testable object we can
 // use in modules.
@@ -31,6 +32,10 @@ function RosterAPI(telerivet) {
 
     this.persistVar = '__RosterAPI__';
     this.restoreState();
+};
+
+RosterAPI.prototype.getVersion = function() {
+    return version;
 };
 
 RosterAPI.prototype.restoreState = function(serialized) {
