@@ -6,12 +6,15 @@ var utils = require('./utils');
 if (!('telerivetContext' in global)) {
 
     global.telerivetContext = {
-        // these variables are only defined within Telerivet's script engine in the context of a message
+        // these variables are only defined within Telerivet's script engine in certain contexts (e.g. in response to a message)
         // they will be undefined in the context of a periodically-running service
         // https://telerivet.com/api/script#global
+
         phone: typeof phone === "undefined" ? {} : phone,
-        state: typeof state === "undefined" ? {} : state,
-        content: typeof content === "undefined" ? {} : content,
+
+        // telerivet's ContactServiceState -- we store the URL, apiKey, and credentials in this Object's customs vars
+        state: typeof state === "undefined" ? { vars: {} } : state,
+        content: typeof content === "undefined" ? "": content,
 
         // these variables are always defined in Telerivet's script engine
         project: project,
