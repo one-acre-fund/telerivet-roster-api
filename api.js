@@ -31,7 +31,7 @@ function RosterAPI(telerivet) {
 
     this.persistVar = '__RosterAPI__';
     this.restoreState();
-};
+}
 
 RosterAPI.prototype.restoreState = function(serialized) {
 
@@ -119,7 +119,7 @@ function HttpError(url, opts, response) {
     this.status = response.status;
     this.opts = opts;
     this.response = response;
-};
+}
 
 HttpError.prototype = new Error();
 HttpError.prototype.constructor = HttpError;
@@ -170,9 +170,9 @@ RosterAPI.prototype.request = function(path, opts) {
     // JSONify content if required
     if (response.content) {
         var contentType = response['Content-Type'];
-        if (contentType && contentType.indexOf('application/json') == 0) {
+        if (contentType && contentType.indexOf('application/json') === 0) {
             response.content = JSON.parse(response.content);
-        } else if (!contentType && opts.headers['Accept'].indexOf('application/json') == 0) {
+        } else if (!contentType && opts.headers['Accept'].indexOf('application/json') === 0) {
             try {
                 response.content = JSON.parse(response.content);
             } catch (err) {
@@ -228,7 +228,7 @@ RosterAPI.prototype.parseAccountAndPin = function(content) {
 
 RosterAPI.prototype.toPhoneContext = function(countryOrPhone) {
 
-    if (countryOrPhone == null)
+    if (countryOrPhone === null)
         countryOrPhone = this.telerivet.phone;
 
     var phoneContext = {};
@@ -282,7 +282,7 @@ RosterAPI.prototype.authClient = function(accountNumber, countryOrPhone, account
         if (!(err instanceof HttpError))
             throw err;
 
-        if (!(err.status == 403))
+        if (!(err.status === 403))
             throw err;
 
         // Authenticating is kind of weird right now, since we don't have
