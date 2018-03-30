@@ -64,7 +64,7 @@ function MockRivet() {
         vars: {}
     };
     this.phone = {};
-};
+}
 
 var tests = [ // BEGIN TESTS
 
@@ -84,7 +84,7 @@ var tests = [ // BEGIN TESTS
 
     function testJoinURL() {
 
-        // Test join logic for url roots and paths  
+        // Test join logic for url roots and paths
 
         var utils = require('../utils');
         var joinURL = utils.joinURL;
@@ -145,13 +145,13 @@ var tests = [ // BEGIN TESTS
         assert(!parsed.accountPin);
 
         content = "@burundi#abcde P123";
-        var parsed = api.parseAccountAndPin(content);
+        parsed = api.parseAccountAndPin(content);
         assert.equal(parsed.accountNumber, "abcde");
         assert.equal(parsed.country, "burundi");
         assert.equal(parsed.accountPin, "123");
 
         content = "P1234 #12346 @zambia and more stuff";
-        var parsed = api.parseAccountAndPin(content);
+        parsed = api.parseAccountAndPin(content);
         assert.equal(parsed.accountNumber, "12346");
         assert.equal(parsed.country, "zambia");
         assert.equal(parsed.accountPin, "1234");
@@ -167,7 +167,7 @@ var tests = [ // BEGIN TESTS
         assert.equal(context.isoCountry, "KE");
         assert.equal(context.oafCountry, "Kenya");
 
-        var context = api.toPhoneContext({
+        context = api.toPhoneContext({
             country: "mw"
         });
         assert(context.phone.country, "mw");
@@ -350,7 +350,7 @@ var tests = [ // BEGIN TESTS
         } catch (trErr) {
             err = trErr;
         }
-        assert(err != null);
+        assert(err !== null);
 
         trassert.equal("a", "a");
         try {
@@ -358,7 +358,7 @@ var tests = [ // BEGIN TESTS
         } catch (trErr) {
             err = trErr;
         }
-        assert(err != null);
+        assert(err !== null);
     },
 
 ]; // END TESTS
