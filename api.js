@@ -236,7 +236,7 @@ RosterAPI.prototype.parseAccountAndPin = function(content) {
 
 RosterAPI.prototype.toPhoneContext = function(countryOrPhone) {
 
-    if (countryOrPhone === null)
+    if (countryOrPhone === undefined)
         countryOrPhone = this.telerivet.phone;
 
     var phoneContext = {};
