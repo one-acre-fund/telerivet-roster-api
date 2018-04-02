@@ -82,7 +82,6 @@ RosterAPI.prototype.attach = function(url, key) {
 
 // We can attach to a URL/Key stored in the project "ExternalApis" data table
 RosterAPI.prototype.dataTableAttach = function(tableName, project) {
-    console.log("begin dataTabseAttach");
     if (!tableName)
         tableName = "ExternalApis";
 
@@ -109,10 +108,6 @@ RosterAPI.prototype.dataTableAttach = function(tableName, project) {
     this.url = row.url;
     this.key = row.key;
     this.saveState();
-    console.log("End dataTableAttach");
-    console.log(this.url);
-    console.log(this.key);
-    console.log(JSON.stringify(row));
     return true;
 };
 
@@ -151,15 +146,11 @@ RosterAPI.prototype.request = function(path, opts) {
     if (!this.url)
         this.dataTableAttach();
 
-    console.log("begin request");
-
     if (!('headers' in opts)) opts.headers = {};
-
-    var credentials = this.credentials;
-    if ('credentials' in opts) credentials = opts.credentials;
+    var credentials = opts.credentials || this.credentials;
 
     if (credentials) {
-        opts.headers['Authorization'] = "ApiKey " + credentials.key;
+        opts.headers['Authorization'] = "ApiKey " + this.key;
         opts.headers['X-OAF-Account'] = credentials.accountNumber;
         opts.headers['X-OAF-Country'] = credentials.accountCountry;
         var accountPin = credentials.accountPin ? credentials.accountPin : "";
@@ -268,7 +259,6 @@ RosterAPI.prototype.authClient = function(accountNumber, countryOrPhone, account
     var phoneContext = this.toPhoneContext(countryOrPhone);
 
     var credentials = {
-        key: this.key,
         accountNumber: accountNumber,
         accountCountry: phoneContext.oafCountry,
         accountPin: accountPin
