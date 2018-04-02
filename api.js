@@ -82,7 +82,7 @@ RosterAPI.prototype.attach = function(url, key) {
 
 // We can attach to a URL/Key stored in the project "ExternalApis" data table
 RosterAPI.prototype.dataTableAttach = function(tableName, project) {
-
+    console.log("begin dataTabseAttach");
     if (!tableName)
         tableName = "ExternalApis";
 
@@ -109,6 +109,10 @@ RosterAPI.prototype.dataTableAttach = function(tableName, project) {
     this.url = row.url;
     this.key = row.key;
     this.saveState();
+    console.log("End dataTableAttach");
+    console.log(this.url);
+    console.log(this.key);
+    console.log(JSON.stringify(row));
     return true;
 };
 
@@ -146,6 +150,8 @@ RosterAPI.prototype.request = function(path, opts) {
 
     if (!this.url)
         this.dataTableAttach();
+
+    console.log("begin request");
 
     if (!('headers' in opts)) opts.headers = {};
 
