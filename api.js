@@ -10,7 +10,7 @@ if (!('telerivetContext' in global)) {
         // they will be undefined in the context of a periodically-running service
         // https://telerivet.com/api/script#global
 
-        phone: typeof phone === "undefined" ? {} : phone,
+        phone: typeof phone === "undefined" ? null : phone,
 
         // telerivet's ContactServiceState -- we store the URL, apiKey, and credentials in this Object's customs vars
         state: typeof state === "undefined" ? { vars: {} } : state,
@@ -239,11 +239,13 @@ RosterAPI.prototype.toPhoneContext = function(countryOrPhone) {
     var phoneContext = {};
 
     if (_.isString(countryOrPhone)) {
-        phoneContext.isoCountry = countryOrPhone.toUpperCase();
         phoneContext.phone = null;
-    } else {
+        phoneContext.isoCountry = countryOrPhone.toUpperCase();
+    } else if (countryOrPhone !== null){
         phoneContext.phone = countryOrPhone;
         phoneContext.isoCountry = phoneContext.phone.country.toUpperCase();
+    } else { // in a scheduled service, the 'phone' will be null, so users must specify a country
+        throw new Error("Please specify a country");
     }
 
     phoneContext.isoCountry =
