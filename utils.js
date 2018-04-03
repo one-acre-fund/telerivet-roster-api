@@ -44,6 +44,9 @@ var nestedGet = function(key, obj) {
 // printf-style formatting: format("Hi {0}", "There") => "Hi There"
 var format = function(str, args) {
     if (!args) args = [];
+    if (!_.isArray(args))
+        args = [args];
+
     return str.replace(/{(\d+)}/g, function(match, number) {
         return typeof args[number] != 'undefined' ?
             args[number] :
