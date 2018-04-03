@@ -164,7 +164,6 @@ RosterAPI.prototype.request = function(path, opts) {
     var fullURL = utils.joinURL(this.url, path);
 
     this.requestLog.push([fullURL, opts]);
-    this.saveState();
 
     if (this.verbose) {
         console.log("Requesting:\n  " + fullURL + "\n options:\n  " + JSON.stringify(opts));
