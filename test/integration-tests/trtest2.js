@@ -3,7 +3,7 @@
 // (Second block)
 //
 
-var assert = require('./trassert');
+var assert = require('../trassert');
 
 var api = require('../../api');
 
