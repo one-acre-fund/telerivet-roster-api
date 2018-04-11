@@ -2,7 +2,7 @@
 // Integration tests in a telerivet environment
 //
 
-var assert = require('./trassert');
+var assert = require('../trassert');
 
 var api = require('../../api');
 
@@ -19,10 +19,10 @@ function testDataTableAttach() {
       }
   }).save();
 
-  api.dataTableAttach("TestApis");
+  // set api to get url/key from TestApis table
+  api.dataTableAttach = api.dataTableAttach.bind(api, "TestApis");
+  api.dataTableAttach();
   assert.ok(state.vars[api.persistVar]);
-
-  assert.ok(false);
 }
 
 module.exports = testDataTableAttach;
