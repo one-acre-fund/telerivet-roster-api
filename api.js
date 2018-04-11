@@ -10,11 +10,11 @@ if (!('telerivetContext' in global)) {
         // they will be undefined in the context of a periodically-running service
         // https://telerivet.com/api/script#global
 
-        phone: 'phone' in global ? null : phone,
+        phone: 'phone' in global ? phone : null,
 
         // telerivet's ContactServiceState -- we store the URL, apiKey, and credentials in this Object's customs vars
-        state: 'state' in global ? { vars: {} } : state,
-        content: 'content' in global ? "": content,
+        state: 'state' in global ? state : { vars: {} },
+        content: 'content' in global ? content : "",
 
         // these variables are always defined in Telerivet's script engine
         project: project,
