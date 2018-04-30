@@ -1,10 +1,5 @@
 // Collect all integration tests here.
-//
-// To run, insert the following code into a telerivet service
-//   ```
-//   var test = require('ext/roster/test/integrations/tests');
-//   test();
-//   ```
+
 var testList = [
   'trtest1',
   'trtest2',
