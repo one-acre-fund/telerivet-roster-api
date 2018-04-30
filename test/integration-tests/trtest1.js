@@ -22,7 +22,7 @@ function testDataTableAttach() {
   // set api to get url/key from TestApis table
   api.dataTableAttach = api.dataTableAttach.bind(api, "TestApis");
   api.dataTableAttach();
-  assert.ok(state.vars[api.persistVar]);
+  assert.ok(api.telerivet.state.vars[api.persistVar]);
 }
 
 module.exports = testDataTableAttach;
