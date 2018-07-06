@@ -19,7 +19,8 @@ var nestedGet = function(key, obj) {
     if (key === '.') return obj;
     if (!_.isArray(obj) && !_.isObject(obj))
         return undefined;
-    if (key in obj) return obj[key]
+  
+    if (key in obj) return obj[key];
 
     var dotIndex = key.indexOf('.');
     if (dotIndex == -1) dotIndex = key.length;
@@ -32,18 +33,23 @@ var nestedGet = function(key, obj) {
         if (_.isArray(obj)) {
             dotKey = parseInt(dotKey);
         }
+      
         var dotValue = obj[dotKey];
     } catch (ex) {
         return undefined;
     }
 
-    if (remKey.length == 0) return dotValue;
+    if (remKey.length === 0) return dotValue;
     return nestedGet(remKey, dotValue);
-}
+};
 
 // printf-style formatting: format("Hi {0}", "There") => "Hi There"
 var format = function(str, args) {
     if (!args) args = [];
+
+    if (!_.isArray(args))
+        args = [args];
+
     return str.replace(/{(\d+)}/g, function(match, number) {
         return typeof args[number] != 'undefined' ?
             args[number] :
@@ -85,4 +91,4 @@ module.exports = {
     format: format,
     isoToOafCountry: isoToOafCountry,
     oafToIsoCountry: oafToIsoCountry
-};
+}

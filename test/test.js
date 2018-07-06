@@ -64,7 +64,7 @@ function MockRivet() {
         vars: {}
     };
     this.phone = {};
-};
+}
 
 var tests = [ // BEGIN TESTS
 
@@ -83,7 +83,6 @@ var tests = [ // BEGIN TESTS
     },
 
     function testJoinURL() {
-
         // Test join logic for url roots and paths  
 
         var utils = require('../utils');
@@ -151,6 +150,7 @@ var tests = [ // BEGIN TESTS
         assert.equal(parsed.accountPin, "123");
 
         content = "P1234 #12346 @zambia and more stuff";
+
         var parsed = api.parseAccountAndPin(content);
         assert.equal(parsed.accountNumber, "12346");
         assert.equal(parsed.country, "zambia");
@@ -361,7 +361,8 @@ var tests = [ // BEGIN TESTS
         } catch (trErr) {
             err = trErr;
         }
-        assert(err != null);
+      
+        assert(err !== null);
 
         trassert.equal("a", "a");
         try {
@@ -369,7 +370,7 @@ var tests = [ // BEGIN TESTS
         } catch (trErr) {
             err = trErr;
         }
-        assert(err != null);
+        assert(err !== null);
     },
 
 ]; // END TESTS

@@ -17,3 +17,16 @@ Tests are run using Node.js of an older 0.x branch:
 Telerivet uses a SpiderMonkey v1.6 javascript engine with some custom extensions - this corresponds roughly to the javascript 0.x branches of Node.js with 'underscore' v1.6 support.
 
 It's not possible to directly run a SpiderMonkey engine without embedding it in another executable, and there's no direct Node.js (i.e. V8) equivalent javascript version (yay javascript incompatibility) so this is probably the simplest approach for now.
+
+## Integration Tests
+
+These tests are to make sure that our code works properly in the Telerivet Cloud Script environment.
+
+### Setting up tests
+
+To run, insert the following code into a recurring telerivet service and click "Test Service". All tests should log as `PASSED`.
+
+```
+var test = require('ext/<cloud-script-name>/test/integration-tests');
+test();
+```

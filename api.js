@@ -7,6 +7,17 @@ var version = require('./version');
 if (!('telerivetContext' in global)) {
 
     global.telerivetContext = {
+        // these variables are only defined within Telerivet's script engine in certain contexts (e.g. in response to a message)
+        // they will be undefined in the context of a periodically-running service
+        // https://telerivet.com/api/script#global
+
+        phone: 'phone' in global ? phone : null,
+
+        // telerivet's ContactServiceState -- we store the URL, apiKey, and credentials in this Object's customs vars
+        state: 'state' in global ? state : { vars: {} },
+        content: 'content' in global ? content : "",
+
+        // these variables are always defined in Telerivet's script engine
         project: project,
         phone: phone,
         state: state,
@@ -79,7 +90,6 @@ RosterAPI.prototype.attach = function(url, key) {
 
 // We can attach to a URL/Key stored in the project "ExternalApis" data table
 RosterAPI.prototype.dataTableAttach = function(tableName, project) {
-
     if (!tableName)
         tableName = "ExternalApis";
 
@@ -124,7 +134,7 @@ function HttpError(url, opts, response) {
     this.status = response.status;
     this.opts = opts;
     this.response = response;
-};
+}
 
 HttpError.prototype = new Error();
 HttpError.prototype.constructor = HttpError;
@@ -136,7 +146,6 @@ HttpError.prototype.toTelerivet = function() {
         $error_response: JSON.stringify(this.response)
     };
 };
-
 RosterAPI.HttpError = HttpError;
 
 RosterAPI.prototype.request = function(path, opts) {
@@ -146,11 +155,10 @@ RosterAPI.prototype.request = function(path, opts) {
 
     if (!('headers' in opts)) opts.headers = {};
 
-    var credentials = this.credentials;
-    if ('credentials' in opts) credentials = opts.credentials;
+    var credentials = opts.credentials || this.credentials;
 
     if (credentials) {
-        opts.headers['Authorization'] = "ApiKey " + credentials.key;
+        opts.headers['Authorization'] = "ApiKey " + this.key;
         opts.headers['X-OAF-Account'] = credentials.accountNumber;
         opts.headers['X-OAF-Country'] = credentials.accountCountry;
         var accountPin = credentials.accountPin ? credentials.accountPin : "";
@@ -170,14 +178,19 @@ RosterAPI.prototype.request = function(path, opts) {
         console.log("Requesting:\n  " + fullURL + "\n options:\n  " + JSON.stringify(opts));
     }
 
+    if (this.verbose) {
+        console.log("Requesting:\n  " + fullURL + "\n options:\n  " + JSON.stringify(opts));
+    }
+
     var response = this.telerivet.httpClient.request(fullURL, opts);
 
     // JSONify content if required
     if (response.content) {
         var contentType = response['Content-Type'];
-        if (contentType && contentType.indexOf('application/json') == 0) {
+      
+        if (contentType && contentType.indexOf('application/json') === 0) {
             response.content = JSON.parse(response.content);
-        } else if (!contentType && opts.headers['Accept'].indexOf('application/json') == 0) {
+        } else if (!contentType && opts.headers['Accept'].indexOf('application/json') === 0) {
             try {
                 response.content = JSON.parse(response.content);
             } catch (err) {
@@ -233,8 +246,13 @@ RosterAPI.prototype.parseAccountAndPin = function(content) {
 
 RosterAPI.prototype.toPhoneContext = function(countryOrPhone) {
 
-    if (countryOrPhone == null)
-        countryOrPhone = this.telerivet.phone;
+    if (countryOrPhone == null) {
+        // in a scheduled service, the 'phone' will be null, so users must specify a country
+        if (this.telerivet.phone == null)
+            throw new Error("Please specify a country");
+        else
+            countryOrPhone = this.telerivet.phone;
+    }
 
     var phoneContext = {};
 
@@ -259,7 +277,6 @@ RosterAPI.prototype.authClient = function(accountNumber, countryOrPhone, account
     var phoneContext = this.toPhoneContext(countryOrPhone);
 
     var credentials = {
-        key: this.key,
         accountNumber: accountNumber,
         accountCountry: phoneContext.oafCountry,
         accountPin: accountPin
@@ -287,7 +304,7 @@ RosterAPI.prototype.authClient = function(accountNumber, countryOrPhone, account
         if (!(err instanceof HttpError))
             throw err;
 
-        if (!(err.status == 403))
+        if (!(err.status === 403))
             throw err;
 
         // Authenticating is kind of weird right now, since we don't have

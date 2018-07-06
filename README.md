@@ -15,6 +15,10 @@ These scripts are meant to be require()'d as a cloud script module in a Telerive
     Stable releases of the Roster API bindings are tagged with semantic versions, for example `v1.0.0`.  Generally production 
     logic flows should import only stable releases as modules by specifying `vX.Y.Z` as the branch name.
     
+    **CAVEAT**: For now, Telerivet cloud script modules must have GLOBALLY unique names. Thus, if your co-worker's account 
+    already added a module called `ext/roster`, you'll have to create your own name, like `ext/my-own-test-roster`. 
+    Sorry, we know that's weird.
+
 1.  To use the Roster API in Telerivet "Logic Flows", add a "Run Custom Javascript" Action to the flow with the following lines:
 
     ```javascript
@@ -45,11 +49,11 @@ These scripts are meant to be require()'d as a cloud script module in a Telerive
     ```
     
     ... but preferably can be done across-the-board in the project settings themselves by creating a new data table called "ExternalApis" in the project with three columns:
-    
+
     | Name | URL | Key |
     | ------------- |:-------------:| -----:|
     | Roster | http://www.oaf.org/api/v0 | really-long-key-012345 |
-    
+
     This way the Roster endpoint and key can be reconfigured without touching a lot of code inside the logic flows.
 
 ## Updates to the bindings
@@ -179,7 +183,3 @@ Helper to infer the account number, country, and PIN a user passes in from the r
 Account numbers are identified with a `#` prefix (`#12345678`), PINs are identified with `P` (`P123`), and country is inferred but may be specified by `@` (`@kenya`).
 
 If `parsed.error != null` the parsing was unsuccessful and `parsed.error.message` may be returned to the user.  Alternately, `parsed.error.code` may be used to provide a custom message instead. 
-
-
-
-
