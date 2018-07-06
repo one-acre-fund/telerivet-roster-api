@@ -32,7 +32,7 @@ var nestedGet = function(key, obj) {
         if (_.isArray(obj)) {
             dotKey = parseInt(dotKey);
         }
-        dotValue = obj[dotKey];
+        var dotValue = obj[dotKey];
     } catch (ex) {
         return undefined;
     }
@@ -61,6 +61,7 @@ var isoToOaf = {
     "RW": "Rwanda",
     "TZ": "Tanzania",
     "BI": "Burundi",
+    "ZM": "Zambia",
     "MM": "Myanmar",
     "MW": "Malawi"
 };
