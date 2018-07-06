@@ -10,7 +10,14 @@ These scripts are meant to be require()'d as a cloud script module in a Telerive
 
 ## Quickstart
 
-1.  First, this repository is added as as a ["Cloud Script Module"](https://telerivet.com/dashboard/a/add_script_module) with a given name, like: `ext/roster`. **CAVEAT**: For now, Telerivet cloud script modules must have GLOBALLY unique names. Thus, if your co-worker's account already added a module called `ext/roster`, you'll have to create your own name, like `ext/my-own-test-roster`. Sorry, we know that's weird.
+1.  First, this repository is added as as a ["Cloud Script Module"](https://telerivet.com/dashboard/a/add_script_module) with a given name, like: `ext/roster`
+
+    Stable releases of the Roster API bindings are tagged with semantic versions, for example `v1.0.0`.  Generally production 
+    logic flows should import only stable releases as modules by specifying `vX.Y.Z` as the branch name.
+    
+    **CAVEAT**: For now, Telerivet cloud script modules must have GLOBALLY unique names. Thus, if your co-worker's account 
+    already added a module called `ext/roster`, you'll have to create your own name, like `ext/my-own-test-roster`. 
+    Sorry, we know that's weird.
 
 1.  To use the Roster API in Telerivet "Logic Flows", add a "Run Custom Javascript" Action to the flow with the following lines:
 
@@ -40,7 +47,7 @@ These scripts are meant to be require()'d as a cloud script module in a Telerive
     ```javascript
     var rosterAPI = require('ext/roster/api').attach("http://www.oaf.org/api/v0", "really-long-key-012345");
     ```
-
+    
     ... but preferably can be done across-the-board in the project settings themselves by creating a new data table called "ExternalApis" in the project with three columns:
 
     | Name | URL | Key |
@@ -48,6 +55,14 @@ These scripts are meant to be require()'d as a cloud script module in a Telerive
     | Roster | http://www.oaf.org/api/v0 | really-long-key-012345 |
 
     This way the Roster endpoint and key can be reconfigured without touching a lot of code inside the logic flows.
+
+## Updates to the bindings
+
+Semantic versions indicate breaking changes by bumping the major version number (`v1` to `v2`), and non-breaking feature additions by bumping the minor version number (`v2.2` to `v2.4`).
+
+On Telerivet, the Roster API bindings are updated by changing to a new versioned branch in the Cloud Script Module for the bindings.  Minor-version updates *should* be safe and require no Telerivet logic flow changes... but a healthy level of paranoia is a great idea.  Major version updates generally require logic flow changes.
+
+It's also possible to use multiple versions of the API bindings by registering differently named Cloud Script Modules - for example `ext/roster-v1.1` and `ext/roster-v2.0`.  This way new bindings can be tested and upgraded slowly in different logic flows one-by-one.
 
 ## API Bindings
 
@@ -136,7 +151,7 @@ The `Result` values are one of:
 * `"SerialNumberIsAlreadyRegisteredToCurrentClient"`
 * `"SerialNumberDoesNotBelongToPassedInputs"` - the serial number can't be found for these inputs in the Roster database
 * `"SerialNumberAmbiguous"` - the serial number was found for two or more products of different types, so a result can't be returned.  This shouldn't happen if only one product type is specified (but rarely can due to an ongoing Roster data issue).
-
+                    
 The `SerialNumProduct` is provided (if possible) to indicate the product type the serial number was found for - generally this is only useful if multiple product types are specified.
 
 ## Other Helpers
@@ -146,7 +161,7 @@ The `SerialNumProduct` is provided (if possible) to indicate the product type th
 ```javascript
 var rosterAPI = require('ext/roster/api');
 catchAll(function() {
-
+	
     $result = rosterAPI.makeBadCall();
 
 }); // $error, $error_message set if errors are thrown
@@ -167,4 +182,4 @@ Helper to infer the account number, country, and PIN a user passes in from the r
 
 Account numbers are identified with a `#` prefix (`#12345678`), PINs are identified with `P` (`P123`), and country is inferred but may be specified by `@` (`@kenya`).
 
-If `parsed.error != null` the parsing was unsuccessful and `parsed.error.message` may be returned to the user.  Alternately, `parsed.error.code` may be used to provide a custom message instead.
+If `parsed.error != null` the parsing was unsuccessful and `parsed.error.message` may be returned to the user.  Alternately, `parsed.error.code` may be used to provide a custom message instead. 

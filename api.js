@@ -1,4 +1,5 @@
 var utils = require('./utils');
+var version = require('./version');
 
 // Dump globals into a testable object we can
 // use in modules.
@@ -18,6 +19,9 @@ if (!('telerivetContext' in global)) {
 
         // these variables are always defined in Telerivet's script engine
         project: project,
+        phone: phone,
+        state: state,
+        content: content,
         httpClient: httpClient
     };
 }
@@ -39,7 +43,11 @@ function RosterAPI(telerivet) {
 
     this.persistVar = '__RosterAPI__';
     this.restoreState();
-}
+};
+
+RosterAPI.prototype.getVersion = function() {
+    return version;
+};
 
 RosterAPI.prototype.restoreState = function(serialized) {
 
@@ -138,7 +146,6 @@ HttpError.prototype.toTelerivet = function() {
         $error_response: JSON.stringify(this.response)
     };
 };
-
 RosterAPI.HttpError = HttpError;
 
 RosterAPI.prototype.request = function(path, opts) {
@@ -147,6 +154,7 @@ RosterAPI.prototype.request = function(path, opts) {
         this.dataTableAttach();
 
     if (!('headers' in opts)) opts.headers = {};
+
     var credentials = opts.credentials || this.credentials;
 
     if (credentials) {
@@ -164,6 +172,11 @@ RosterAPI.prototype.request = function(path, opts) {
     var fullURL = utils.joinURL(this.url, path);
 
     this.requestLog.push([fullURL, opts]);
+    this.saveState();
+
+    if (this.verbose) {
+        console.log("Requesting:\n  " + fullURL + "\n options:\n  " + JSON.stringify(opts));
+    }
 
     if (this.verbose) {
         console.log("Requesting:\n  " + fullURL + "\n options:\n  " + JSON.stringify(opts));
@@ -174,6 +187,7 @@ RosterAPI.prototype.request = function(path, opts) {
     // JSONify content if required
     if (response.content) {
         var contentType = response['Content-Type'];
+      
         if (contentType && contentType.indexOf('application/json') === 0) {
             response.content = JSON.parse(response.content);
         } else if (!contentType && opts.headers['Accept'].indexOf('application/json') === 0) {
@@ -243,8 +257,8 @@ RosterAPI.prototype.toPhoneContext = function(countryOrPhone) {
     var phoneContext = {};
 
     if (_.isString(countryOrPhone)) {
-        phoneContext.phone = null;
         phoneContext.isoCountry = countryOrPhone.toUpperCase();
+        phoneContext.phone = null;
     } else {
         phoneContext.phone = countryOrPhone;
         phoneContext.isoCountry = phoneContext.phone.country.toUpperCase();

@@ -83,8 +83,7 @@ var tests = [ // BEGIN TESTS
     },
 
     function testJoinURL() {
-
-        // Test join logic for url roots and paths
+        // Test join logic for url roots and paths  
 
         var utils = require('../utils');
         var joinURL = utils.joinURL;
@@ -145,16 +144,28 @@ var tests = [ // BEGIN TESTS
         assert(!parsed.accountPin);
 
         content = "@burundi#abcde P123";
-        parsed = api.parseAccountAndPin(content);
+        var parsed = api.parseAccountAndPin(content);
         assert.equal(parsed.accountNumber, "abcde");
         assert.equal(parsed.country, "burundi");
         assert.equal(parsed.accountPin, "123");
 
         content = "P1234 #12346 @zambia and more stuff";
-        parsed = api.parseAccountAndPin(content);
+
+        var parsed = api.parseAccountAndPin(content);
         assert.equal(parsed.accountNumber, "12346");
         assert.equal(parsed.country, "zambia");
         assert.equal(parsed.accountPin, "1234");
+    },
+
+    function testApiVersion() {
+        
+        // Tests super dumb version info coming back
+        
+        var api = require('../api');
+        
+        console.log("API Version", api.getVersion());
+
+        assert(parseInt(api.getVersion().semver[0]) > 0);
     },
 
     function testPhoneContext() {
@@ -167,7 +178,7 @@ var tests = [ // BEGIN TESTS
         assert.equal(context.isoCountry, "KE");
         assert.equal(context.oafCountry, "Kenya");
 
-        context = api.toPhoneContext({
+        var context = api.toPhoneContext({
             country: "mw"
         });
         assert(context.phone.country, "mw");
@@ -350,6 +361,7 @@ var tests = [ // BEGIN TESTS
         } catch (trErr) {
             err = trErr;
         }
+      
         assert(err !== null);
 
         trassert.equal("a", "a");
