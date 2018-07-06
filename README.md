@@ -94,28 +94,71 @@ Returns a client information object with at least the following:
 
 ```javascript
 {
+  GlobalClientId: "...",
+  AccountNumber: (number),
+  ClientName: "...", // full name
+  FirstName: "...",
+  LastName: "...",
+
+  // active account details
   ClientId: (number),
-  GlobalClientId: "..."
-  AccountNumber: "..."
-  FirstName: "..."
-  LastName: "..."
-  DistrictName: "..."
-  RegionName: "..."
-  CountryName: "Kenya"
-  DateCreated: "2016-04-05T14:30:29.397"
-  EnrollmentDate: "2016-04-05T14:30:29.397"
-  Ban: false
-  Deceased: false
-  FirstSeasonId: 180
-  LastActiveSeasonId: null|(number)
+  DistrictId: (number),
+  DistrictName: "...",
+  RegionId: (number),
+  RegionName: "...",
+  CountryId: (number),
+  CountryName: "...",
+  CreatedDate: (date),
+  EnrollmentDate: (date),
+  BannedDate: (date) | null,
+  DeceasedDate: (date) | null,
+
+  // aggregate account details
+  EarliestCreatedDate: (date),
+  EarliestEnrollmentDate: (date),
+  LatestBannedDate: (date) | null,
+
+  // current enrollment details (null if client has never enrolled with active account)
+  GroupId: (number) | null,
+  GroupName: "..." | null,
+  SiteId: (number) | null,
+  SiteName: "..." | null,
+
+  // client accounts in reverse chronological order
+  // Each account has a unique AccountGuid
+  AccountHistory: [
+    {
+      AccountGuid: "...",
+      ClientId: (number),
+      AccountNumber: "...",
+      DistrictId: (number),
+      DistrictName: "...",
+      RegionId: (number),
+      RegionName: "...",
+      CountryId: (number),
+      CountryName: "..."
+    },
+    ...
+  ],
+
+  // balance history in reverse chronological order
   BalanceHistory: [
-    { "SeasonId": 180,
-      "SeasonName": "2016, Long Rain",
-      "SeasonStart":"2016-03-01T00:00:00",
-      "CurrencyCode":"MMK",
-      "TotalCredit":90000,
-      "TotalRepayment_IncludingOverpayments":90000,
-      "Balance":0 },
+    {
+      // enrollment details
+      AccountGuid: "...",
+      GroupId: (number),
+      GroupName: "...",
+      SiteId: (number),
+      SiteName: "...",
+      SeasonId: (number),
+      SeasonName: "...",
+      SeasonStart: "...",
+
+      // repayment details
+      TotalCredit: (number),
+      TotalRepayment_IncludingOverpayments: (number),
+      Balance: (number),
+      CurrencyCode: "..."},
    ...
    ]
 }
