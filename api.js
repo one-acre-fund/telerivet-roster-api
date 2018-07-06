@@ -13,7 +13,9 @@ if (!('telerivetContext' in global)) {
         phone: 'phone' in global ? phone : null,
 
         // telerivet's ContactServiceState -- we store the URL, apiKey, and credentials in this Object's customs vars
-        state: 'state' in global ? state : { vars: {} },
+        state: 'state' in global ? state : {
+            vars: {}
+        },
         content: 'content' in global ? content : "",
 
         // these variables are always defined in Telerivet's script engine

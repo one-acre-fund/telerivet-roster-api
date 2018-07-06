@@ -1,20 +1,29 @@
-# telerivet-roster-api
+#
+telerivet - roster - api
 
-Telerivet-focused bindings for the Roster API
+Telerivet - focused bindings
+for the Roster API
 
-These scripts are meant to be require()'d as a cloud script module in a Telerivet project to enable simple Roster API calls.  The module handles annoying tasks like:
+These scripts are meant to be require()
+'d as a cloud script module in a Telerivet project to enable simple Roster API calls.  The module handles annoying tasks like:
 
-* Transparently loading API endpoint and API key from a shared data table
-* Persisting state (for example, client credentials) between different javascript runs in a Telerivet logic flow
-* Wrapping HTTP errors into standard javascript errors, wrapping standard javascript errors into Telerivet `$variables`
+*
+Transparently loading API endpoint and API key from a shared data table
+    *
+    Persisting state(
+        for example, client credentials) between different javascript runs in a Telerivet logic flow *
+    Wrapping HTTP errors into standard javascript errors, wrapping standard javascript errors into Telerivet `$variables`
 
-## Quickstart
+##
+Quickstart
 
-1.  First, this repository is added as as a ["Cloud Script Module"](https://telerivet.com/dashboard/a/add_script_module) with a given name, like: `ext/roster`. **CAVEAT**: For now, Telerivet cloud script modules must have GLOBALLY unique names. Thus, if your co-worker's account already added a module called `ext/roster`, you'll have to create your own name, like `ext/my-own-test-roster`. Sorry, we know that's weird.
+1. First, this repository is added as as a["Cloud Script Module"](https: //telerivet.com/dashboard/a/add_script_module) with a given name, like: `ext/roster`. **CAVEAT**: For now, Telerivet cloud script modules must have GLOBALLY unique names. Thus, if your co-worker's account already added a module called `ext/roster`, you'll have to create your own name, like `ext/my-own-test-roster`. Sorry, we know that's weird.
 
-1.  To use the Roster API in Telerivet "Logic Flows", add a "Run Custom Javascript" Action to the flow with the following lines:
+        1. To use the Roster API in Telerivet "Logic Flows", add a "Run Custom Javascript"
+        Action to the flow with the following lines:
 
-    ```javascript
+        ``
+        `javascript
     var rosterAPI = require('ext/roster/api');
     catchAll(function() {
 
@@ -22,64 +31,90 @@ These scripts are meant to be require()'d as a cloud script module in a Telerive
       $result = rosterAPI.doStuff();
 
     }); // $error, $error_message set if errors are thrown
-    ```
+    `
+        ``
 
-    For example, a call to get the client balance might look like:
+        For example, a call to get the client balance might look like:
 
-    ```javascript
+        ``
+        `javascript
     var rosterAPI = require('ext/roster/api');
     catchAll(function() {
 
       $balance = rosterAPI.getClient($accountNumber).balance;
 
     });
-    ```
+    `
+        ``
 
-1.  The Roster API requires a Roster endpoint (URL) and API key be specified - this can be done in the binding itself by:
+        1. The Roster API requires a Roster endpoint(URL) and API key be specified - this can be done in the binding itself by:
 
-    ```javascript
+        ``
+        `javascript
     var rosterAPI = require('ext/roster/api').attach("http://www.oaf.org/api/v0", "really-long-key-012345");
-    ```
+    `
+        ``
 
-    ... but preferably can be done across-the-board in the project settings themselves by creating a new data table called "ExternalApis" in the project with three columns:
+        ...but preferably can be done across - the - board in the project settings themselves by creating a new data table called "ExternalApis" in the project with three columns:
 
-    | Name | URL | Key |
-    | ------------- |:-------------:| -----:|
-    | Roster | http://www.oaf.org/api/v0 | really-long-key-012345 |
+        |
+        Name | URL | Key |
+        |
+        -- -- -- -- -- -- - |: -- -- -- -- -- -- -: | -- -- -: |
+        |
+        Roster | http: //www.oaf.org/api/v0 | really-long-key-012345 |
 
-    This way the Roster endpoint and key can be reconfigured without touching a lot of code inside the logic flows.
+        This way the Roster endpoint and key can be reconfigured without touching a lot of code inside the logic flows.
 
-## API Bindings
+        ##API Bindings
 
-### request(path, opts) => obj
+        ### request(path, opts) => obj
 
-```javascript
+        ``
+        `javascript
 $result = rosterAPI.request("Clients", { params: { 'account' : '12345' } });
-```
+`
+        ``
 
-Raw API request functionality which uses the attached endpoint and API key of the `rosterAPI` to do a request at a certain URL path.  Returns the response content when successful, otherwise throws an HttpError containing the full response object and other data.
+        Raw API request functionality which uses the attached endpoint and API key of the `rosterAPI`
+        to do a request at a certain URL path.Returns the response content when successful, otherwise throws an HttpError containing the full response object and other data.
 
-------
+            -- -- --
 
-### authClient(accountNumber, [countryOrPhone], [accountPin]) => bool
+            ###authClient(accountNumber, [countryOrPhone], [accountPin]) => bool
 
-```javascript
+        ``
+        `javascript
 $isValidAndAuthorized = rosterAPI.authClient("12345");
-```
+`
+        ``
 
-Authorizes the client to access Roster, which (for now) simply requires a valid `accountNumber`, and stores the provided credentials for future calls (`accountPin` if provided).  The `countryOrPhone` parameter may be either the telerivet global `phone` object (default if not provided), a Roster country name, or an ISO country name.
+        Authorizes the client to access Roster, which(
+            for now) simply requires a valid `accountNumber`, and stores the provided credentials
+        for future calls(`accountPin`
+            if provided).The `countryOrPhone`
+        parameter may be either the telerivet global `phone`
+        object(
+            default
+            if not provided), a Roster country name, or an ISO country name.
 
-`authClient` must be used before making other API calls, even without a PIN, otherwise `403 HttpErrors` will be thrown.  For now you can work around this with `rosterAPI.credentials = { key: rosterAPI.key }; rosterAPI.saveState();`, but this won't work once calls no longer include the account number.
+        `authClient`
+        must be used before making other API calls, even without a PIN, otherwise `403 HttpErrors`
+        will be thrown.For now you can work around this with `rosterAPI.credentials = { key: rosterAPI.key }; rosterAPI.saveState();`, but this won 't work once calls no longer include the account number.
 
-### getClient(accountNumber, [countryOrPhone]) => obj
+        ###
+        getClient(accountNumber, [countryOrPhone]) => obj
 
-```javascript
+        ``
+        `javascript
 $client = rosterAPI.getClient("12345");
-```
+`
+        ``
 
-Returns a client information object with at least the following:
+        Returns a client information object with at least the following:
 
-```javascript
+        ``
+        `javascript
 {
   ClientId: (number),
   GlobalClientId: "..."
@@ -106,44 +141,66 @@ Returns a client information object with at least the following:
    ...
    ]
 }
-```
+`
+        ``
 
-The `accountNumber` and `countryOrPhone` parameters are used similarly to the `authClient` call.
+        The `accountNumber`
+        and `countryOrPhone`
+        parameters are used similarly to the `authClient`
+        call.
 
-### isSerialNumberRegistered(productTypes, serialNum, accountNumber, [countryOrPhone]) => obj
+        ###isSerialNumberRegistered(productTypes, serialNum, accountNumber, [countryOrPhone]) => obj
 
-```javascript
+        ``
+        `javascript
 $result = rosterAPI.isSerialNumberRegistered("Sun King Home", "67890987", "12345");
-```
+`
+        ``
 
-Returns a result object with at least the following:
+        Returns a result object with at least the following:
 
-```javascript
+        ``
+        `javascript
 {
   Result: "SerialNumberNotRegistered",
   SerialNumProduct: "Sun King Home"
 }
-```
+`
+        ``
 
-The `productTypes` parameter may be either a single Roster product type (name of a Roster input) or an array of several product types.
+        The `productTypes`
+        parameter may be either a single Roster product type(name of a Roster input) or an array of several product types.
 
-The `accountNumber` and `countryOrPhone` parameters are used similarly to the `getClient` call.
+        The `accountNumber`
+        and `countryOrPhone`
+        parameters are used similarly to the `getClient`
+        call.
 
-The `Result` values are one of:
+        The `Result`
+        values are one of:
 
-* `"SerialNumberNotRegistered"`
-* `"SerialNumberIsRegisteredToAnotherClient"`
-* `"SerialNumberIsAlreadyRegisteredToCurrentClient"`
-* `"SerialNumberDoesNotBelongToPassedInputs"` - the serial number can't be found for these inputs in the Roster database
-* `"SerialNumberAmbiguous"` - the serial number was found for two or more products of different types, so a result can't be returned.  This shouldn't happen if only one product type is specified (but rarely can due to an ongoing Roster data issue).
+        *
+        `"SerialNumberNotRegistered"` *
+        `"SerialNumberIsRegisteredToAnotherClient"` *
+        `"SerialNumberIsAlreadyRegisteredToCurrentClient"` *
+        `"SerialNumberDoesNotBelongToPassedInputs"` - the serial number can 't be found for these inputs in the Roster database *
+        `"SerialNumberAmbiguous"` - the serial number was found
+        for two or more products of different types, so a result can 't be returned.  This shouldn'
+        t happen
+        if only one product type is specified(but rarely can due to an ongoing Roster data issue).
 
-The `SerialNumProduct` is provided (if possible) to indicate the product type the serial number was found for - generally this is only useful if multiple product types are specified.
+        The `SerialNumProduct`
+        is provided(
+            if possible) to indicate the product type the serial number was found
+        for -generally this is only useful
+        if multiple product types are specified.
 
-## Other Helpers
+        ##Other Helpers
 
-### [global].catchAll
+        ###[global].catchAll
 
-```javascript
+        ``
+        `javascript
 var rosterAPI = require('ext/roster/api');
 catchAll(function() {
 
@@ -155,16 +212,26 @@ if ($error) {
    // Handle error case in javascript or in logic flow
 }
 
-```
+`
+        ``
 
-The `catchAll` helper function wraps javascript errors in a helpful way so they can be used later in a Telerivet error-handling logic branch.  Because only global `$`-prefixed variables with `string|int` values are usable later in Telerivet logic flows, error handling isn't possible unless errors are reported in this form.
+        The `catchAll`
+        helper
+        function wraps javascript errors in a helpful way so they can be used later in a Telerivet error - handling logic branch.Because only global `$` - prefixed variables with `string|int`
+        values are usable later in Telerivet logic flows, error handling isn 't possible unless errors are reported in this form.
 
-Certain error classes also report extra information (like `HttpError`'s `$error_status` and `$error_url`) by implementing a `toTelerivet()` method.
+        Certain error classes also report extra information(like `HttpError`
+            's `$error_status` and `$error_url`) by implementing a `toTelerivet()` method.
 
-### parseAccountAndPin()
+            ###
+            parseAccountAndPin()
 
-Helper to infer the account number, country, and PIN a user passes in from the raw content of a text message.
+            Helper to infer the account number, country, and PIN a user passes in from the raw content of a text message.
 
-Account numbers are identified with a `#` prefix (`#12345678`), PINs are identified with `P` (`P123`), and country is inferred but may be specified by `@` (`@kenya`).
+            Account numbers are identified with a `#`
+            prefix(`#12345678`), PINs are identified with `P` (`P123`), and country is inferred but may be specified by `@` (`@kenya`).
 
-If `parsed.error != null` the parsing was unsuccessful and `parsed.error.message` may be returned to the user.  Alternately, `parsed.error.code` may be used to provide a custom message instead.
+            If `parsed.error != null`
+            the parsing was unsuccessful and `parsed.error.message`
+            may be returned to the user.Alternately, `parsed.error.code`
+            may be used to provide a custom message instead.
