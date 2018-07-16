@@ -1,4 +1,5 @@
 var utils = require('./utils');
+var version = require('./version');
 
 // Dump globals into a testable object we can
 // use in modules.
@@ -13,7 +14,9 @@ if (!('telerivetContext' in global)) {
         phone: 'phone' in global ? phone : null,
 
         // telerivet's ContactServiceState -- we store the URL, apiKey, and credentials in this Object's customs vars
-        state: 'state' in global ? state : { vars: {} },
+        state: 'state' in global ? state : {
+            vars: {}
+        },
         content: 'content' in global ? content : "",
 
         // these variables are always defined in Telerivet's script engine
@@ -39,7 +42,11 @@ function RosterAPI(telerivet) {
 
     this.persistVar = '__RosterAPI__';
     this.restoreState();
-}
+};
+
+RosterAPI.prototype.getVersion = function() {
+    return version;
+};
 
 RosterAPI.prototype.restoreState = function(serialized) {
 
@@ -164,6 +171,11 @@ RosterAPI.prototype.request = function(path, opts) {
     var fullURL = utils.joinURL(this.url, path);
 
     this.requestLog.push([fullURL, opts]);
+    this.saveState();
+
+    if (this.verbose) {
+        console.log("Requesting:\n  " + fullURL + "\n options:\n  " + JSON.stringify(opts));
+    }
 
     if (this.verbose) {
         console.log("Requesting:\n  " + fullURL + "\n options:\n  " + JSON.stringify(opts));
