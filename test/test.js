@@ -64,7 +64,7 @@ function MockRivet() {
         vars: {}
     };
     this.phone = {};
-};
+}
 
 var tests = [ // BEGIN TESTS
 
@@ -84,7 +84,7 @@ var tests = [ // BEGIN TESTS
 
     function testJoinURL() {
 
-        // Test join logic for url roots and paths  
+        // Test join logic for url roots and paths
 
         var utils = require('../utils');
         var joinURL = utils.joinURL;
@@ -158,11 +158,11 @@ var tests = [ // BEGIN TESTS
     },
 
     function testApiVersion() {
-        
+
         // Tests super dumb version info coming back
-        
+
         var api = require('../api');
-        
+
         console.log("API Version", api.getVersion());
 
         assert(parseInt(api.getVersion().semver[0]) > 0);
@@ -361,7 +361,7 @@ var tests = [ // BEGIN TESTS
         } catch (trErr) {
             err = trErr;
         }
-        assert(err != null);
+        assert(err !== null);
 
         trassert.equal("a", "a");
         try {
@@ -369,7 +369,7 @@ var tests = [ // BEGIN TESTS
         } catch (trErr) {
             err = trErr;
         }
-        assert(err != null);
+        assert(err !== null);
     },
 
 ]; // END TESTS
