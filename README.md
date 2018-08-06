@@ -1,5 +1,7 @@
 # telerivet-roster-api
 
+Do something worthless to show how JIRA integrates.
+
 Telerivet-focused bindings for the Roster API
 
 These scripts are meant to be require()'d as a cloud script module in a Telerivet project to enable simple Roster API calls.  The module handles annoying tasks like:
