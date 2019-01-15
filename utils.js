@@ -63,7 +63,10 @@ var isoToOaf = {
     "BI": "Burundi",
     "ZM": "Zambia",
     "MM": "Myanmar",
-    "MW": "Malawi"
+    "MW": "Malawi",
+    "NG": "Nigeria",
+    "IN": "India",
+    "ET": "Ethiopia"
 };
 
 var isoToOafCountry = function(isoCountry) {
