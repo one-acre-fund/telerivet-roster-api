@@ -195,6 +195,44 @@ The `Result` values are one of:
 
 The `SerialNumProduct` is provided (if possible) to indicate the product type the serial number was found for - generally this is only useful if multiple product types are specified.
 
+### validatePayment(accountNumber, amountLocalCurrency, [phone], [collectViaProvider]) => obj
+
+```javascript
+$result = rosterAPI.validatePayment("67890987", 1000);
+```
+
+Returns a result object with at least the following on successful validation:
+
+```javascript
+{
+  Result: true
+}
+```
+
+Returns a result object with at least the following on validation failure:
+
+```javascript
+{
+  Result: false,
+  ErrorCode: (number),
+  ErrorMessage: (string)
+}
+```
+
+The `accountNumber` and `phone` parameters are used to identify the client - a `phone` object and not just the country is required for validation and push collection requests.  The `phone` object defaults to the global telerivet `phone` object if not specified.
+
+The `amountLocalCurrency` parameter is a numeric value of the amount of the payment request in the country-standard currency of the `phone`.
+
+The `collectViaProvider` parameter may either be an explicit provider name like 'Beyonic' or `true`, which is a placeholder for the default provider for the `phone` country.  If specified and the payment information is valid, the provider will be asked to collect the payment request asynchronously after validation.  If not specified only validation will occur.  Also see `collectPayment()`.
+
+### collectPayment(accountNumber, amountLocalCurrency, [phone], [collectViaProvider]) => obj
+
+```javascript
+$result = rosterAPI.collectPayment("67890987", 1000);
+```
+
+A thin wrapper for `validatePayment()` which defaults to collecting the payment request if valid.
+
 ## Other Helpers
 
 ### [global].catchAll
