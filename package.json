@@ -1,6 +1,6 @@
 {
   "name": "telerivet-roster-api",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Telerivet bindings to the roster api",
   "main": "api.js",
   "directories": {
