@@ -61,7 +61,6 @@ var isoToOaf = {
     "RW": "Rwanda",
     "TZ": "Tanzania",
     "BI": "Burundi",
-    "ZM": "Zambia",
     "MM": "Myanmar",
     "MW": "Malawi",
     "NG": "Nigeria",

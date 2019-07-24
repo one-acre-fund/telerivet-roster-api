@@ -255,7 +255,7 @@ var tests = [ // BEGIN TESTS
         assert.equal(request[1].params.account, "CLIENTID");
         assert.equal(request[1].params.country, "Kenya");
         assert.equal(request[1].headers.Pin, "PIN");
-        assert.equal(request[1].headers['X-OAF-Account'], "CLIENTID");
+        assert.equal(request[1].headers['X-OAF-AccountNumber'], "CLIENTID");
         assert.equal(request[1].headers.Authorization, "ApiKey APIKEY");
         assert.equal(api.credentials.accountCountry, "Kenya");
         assert.equal(api.credentials.accountNumber, "CLIENTID");
@@ -300,8 +300,8 @@ var tests = [ // BEGIN TESTS
         assert.equal(request[1].params.account, "7890");
         assert.equal(request[1].params.country, "Kenya");
         assert.equal(request[1].headers.Pin, "PIN");
-        assert.equal(request[1].headers['X-OAF-Pin'], "PIN");
-        assert.equal(request[1].headers['X-OAF-Account'], "7890");
+        assert.equal(request[1].headers['X-OAF-AccountPin'], "PIN");
+        assert.equal(request[1].headers['X-OAF-AccountNumber'], "7890");
         assert.equal(request[1].headers['X-OAF-Country'], "Kenya");
         assert.equal(request[1].headers.Authorization, "ApiKey APIKEY");
     },
@@ -347,6 +347,102 @@ var tests = [ // BEGIN TESTS
         assert.equal($error_message, "Server Error");
         assert.equal($error_url, "http://oaf.com/sms/Client");
         assert.equal(JSON.parse($error_opts).params.account, "7890");
+    },
+
+    function testValidatePayment() {
+
+        // Tests errors thrown by API calls
+
+        var api = require('../api');
+
+        api.attach("http://oaf.com", "APIKEY");
+        api.telerivet = new MockRivet();
+        api.telerivet.phone = {
+            phone_number: "+254000000000",
+            country: "KE",
+        }
+
+        // Auth with client pin
+        api.telerivet.responses.push({
+            status: 200,
+            content: JSON.stringify({
+                "Result": "ClientExists"
+            })
+        });
+        assert(api.authClient("12345", null, "PIN"));
+
+        // No push collect
+        api.telerivet.responses.push({
+            content: {
+                Result: true,
+            },
+            status: 200
+        });
+
+        api.requestLog = [];
+        var validation = api.validatePayment("12345", 100);
+        assert.equal(validation.Result, true);
+
+        var request = api.requestLog[0];
+        assert.equal(request[0], "http://oaf.com/GlobalMM/Validate");
+        assert.equal(request[1].data.accountNumber, "12345");
+        assert.equal(request[1].data.countryCode, "KE");
+        assert.equal(request[1].data.amount, 100);
+        assert.equal(request[1].data.phoneNumber, "+254000000000");
+        assert.equal(request[1].data.mobileProvider, null);
+        assert.equal(request[1].params.pushCollect, false);
+        assert.equal(request[1].headers['X-OAF-AccountNumber'], "12345");
+        assert.equal(request[1].headers['X-OAF-AccountPin'], "PIN");
+        assert.equal(request[1].headers['X-OAF-Country'], "Kenya");
+        assert.equal(request[1].headers.Authorization, "ApiKey APIKEY");
+
+        // Default provider
+        api.telerivet.responses.push({
+            content: {
+                Result: true,
+            },
+            status: 200
+        });
+
+        api.requestLog = [];
+        var validation = api.validatePayment(
+            "12345", 100, api.telerivet.phone, true);
+
+        var request = api.requestLog[0];
+        assert.equal(request[1].data.mobileProvider, null);
+        assert.equal(request[1].params.pushCollect, true);
+
+        // Explicit provider
+        api.telerivet.responses.push({
+            content: {
+                Result: true,
+            },
+            status: 200
+        });
+
+        api.requestLog = [];
+        var validation = api.validatePayment(
+            "12345", 100, api.telerivet.phone, "Beyonic");
+
+        var request = api.requestLog[0];
+        assert.equal(request[1].data.mobileProvider, "Beyonic");
+        assert.equal(request[1].params.pushCollect, true);
+
+        // Push helper
+        api.telerivet.responses.push({
+            content: {
+                Result: true,
+            },
+            status: 200
+        });
+
+        api.requestLog = [];
+        var validation = api.collectPayment(
+            "12345", 100, api.telerivet.phone);
+
+        var request = api.requestLog[0];
+        assert.equal(request[1].data.mobileProvider, null);
+        assert.equal(request[1].params.pushCollect, true);
     },
 
     function testTrAssert() {

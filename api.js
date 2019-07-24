@@ -158,11 +158,12 @@ RosterAPI.prototype.request = function(path, opts) {
 
     if (credentials) {
         opts.headers['Authorization'] = "ApiKey " + this.key;
-        opts.headers['X-OAF-Account'] = credentials.accountNumber;
+        opts.headers['X-OAF-ApiKey'] = this.key;
+        opts.headers['X-OAF-AccountNumber'] = credentials.accountNumber;
         opts.headers['X-OAF-Country'] = credentials.accountCountry;
         var accountPin = credentials.accountPin ? credentials.accountPin : "";
         opts.headers['Pin'] = accountPin;
-        opts.headers['X-OAF-Pin'] = accountPin;
+        opts.headers['X-OAF-AccountPin'] = accountPin;
     }
 
     if (!('Accept' in opts.headers))
@@ -172,10 +173,6 @@ RosterAPI.prototype.request = function(path, opts) {
 
     this.requestLog.push([fullURL, opts]);
     this.saveState();
-
-    if (this.verbose) {
-        console.log("Requesting:\n  " + fullURL + "\n options:\n  " + JSON.stringify(opts));
-    }
 
     if (this.verbose) {
         console.log("Requesting:\n  " + fullURL + "\n options:\n  " + JSON.stringify(opts));
@@ -365,6 +362,46 @@ RosterAPI.prototype.isSerialNumberRegistered = function(
     };
 
     return this.request(path, opts);
+};
+
+RosterAPI.prototype.validatePayment = function(
+    accountNumber, amountLocalCurrency, phone, collectViaProvider) {
+
+    var phoneContext = this.toPhoneContext(phone);
+
+    var repaymentReq = {
+        accountNumber: accountNumber,
+        countryCode: phoneContext.isoCountry,
+        amount: amountLocalCurrency,
+        phoneNumber: (phoneContext.phone || {}).phone_number,
+        // We use the default provider unless one is specified as a string
+        mobileProvider: _.isString(collectViaProvider) ? collectViaProvider : null,
+    };
+
+    var path = utils.format('GlobalMM/Validate', []);
+
+    var opts = {
+        method: 'POST',
+        data: repaymentReq,
+        params: {
+            // We push a repayment request via USSD if a provider or "true" (default)
+            // is specified.
+            pushCollect: (!!collectViaProvider),
+        },
+        headers: {
+            'Accept': 'application/json'
+        }
+    };
+
+    return this.request(path, opts);
+};
+
+RosterAPI.prototype.collectPayment = function(
+    accountNumber, amountLocalCurrency, phone, collectViaProvider) {
+
+    // Use the default provider if nothing is specified
+    return this.validatePayment(
+        accountNumber, amountLocalCurrency, phone, collectViaProvider || true);
 };
 
 global.catchAll = function(todo) {
