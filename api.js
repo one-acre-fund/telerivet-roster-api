@@ -365,9 +365,9 @@ RosterAPI.prototype.isSerialNumberRegistered = function(
 };
 
 RosterAPI.prototype.validatePayment = function(
-    accountNumber, amountLocalCurrency, countryOrPhone, collectViaProvider) {
+    accountNumber, amountLocalCurrency, phone, collectViaProvider) {
 
-    var phoneContext = this.toPhoneContext(countryOrPhone);
+    var phoneContext = this.toPhoneContext(phone);
 
     var repaymentReq = {
         accountNumber: accountNumber,
@@ -397,11 +397,11 @@ RosterAPI.prototype.validatePayment = function(
 };
 
 RosterAPI.prototype.collectPayment = function(
-    accountNumber, amountLocalCurrency, countryOrPhone, collectViaProvider) {
+    accountNumber, amountLocalCurrency, phone, collectViaProvider) {
 
     // Use the default provider if nothing is specified
     return this.validatePayment(
-        accountNumber, amountLocalCurrency, countryOrPhone, collectViaProvider || true);
+        accountNumber, amountLocalCurrency, phone, collectViaProvider || true);
 };
 
 global.catchAll = function(todo) {
